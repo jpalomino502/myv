@@ -89,8 +89,8 @@ object JsonData {
             {"name": "Espolvoreo", "value": "espolvoreo", "checked": false},
             {"name": "Aspersión Manual", "value": "aspersion-manual", "checked": false},
             {"name": "Aplicación de Gel", "value": "aplicacion-de-gel", "checked": false},
-            {"name": "Trampas Físicas - Control de Moscas", "value": "trampas-fisicas-control-de-moscas", "checked": false},
-            {"name": "Control Físico Insectos Voladores Lámpara ULV", "value": "control-fisico-insectos-voladores-lampara-ulv", "checked": false},
+            {"name": "Trampas Físicas C.M", "value": "trampas-fisicas-control-de-moscas", "checked": false},
+            {"name": "Control Físico I.V.L.U", "value": "control-fisico-insectos-voladores-lampara-ulv", "checked": false},
             {"name": "Reubicación Abejas", "value": "reubicacion-abejas", "checked": false}
         ],
         "grados": $GRADOS_JSON
@@ -205,8 +205,8 @@ object JsonData {
         ],
         "metodos": [
             {"name": "Trampa Tubo PVC", "value": "trampa-tubo-pvc", "checked": false},
-            {"name": "Trampa Cajas Cebadero", "value": "trampa-cajas-cebadero", "checked": false},
-            {"name": "Trampas de Impacto Cocodrilo", "value": "trampas-de-impacto-cocodrilo", "checked": false},
+            {"name": "Trampa Cajas C.", "value": "trampa-cajas-cebadero", "checked": false},
+            {"name": "Trampas de I.C", "value": "trampas-de-impacto-cocodrilo", "checked": false},
             {"name": "Trampa Adherente Bandeja 48 RNHP Bandeja 2", "value": "trampa-adherente-bandeja-48-rnhp-bandeja-2", "checked": false},
             {"name": "Trampa Adherente Gato de Papel Neopreno", "value": "trampa-adherente-gato-de-papel-neopreno", "checked": false},
             {"name": "Jaulas para roedores", "value": "jaulas-para-roedores", "checked": false},
@@ -220,8 +220,8 @@ object JsonData {
     {
         "servicio": "Servicio 11",
         "plagas": [
-            {"name": "Lavado - Limpieza y Desinfección de tanques", "value": "Lavado-Limpieza-Desinfección-de-tanques", "checked": false},
-            {"name": "Vaciado - Lavado - Desinfección - Llenado", "value": "Vaciado-Lavado-Desinfección-Llenado", "checked": false}
+            {"name": "Lavado-Limpieza D.T", "value": "Lavado-Limpieza-Desinfección-de-tanques", "checked": false},
+            {"name": "Vaciado-Lavado-D.L", "value": "Vaciado-Lavado-Desinfección-Llenado", "checked": false}
         ],
         "metodos": [
             {"name": "Monitoreo", "value": "monitoreo", "checked": false}
@@ -243,10 +243,10 @@ object JsonData {
     {
         "servicio": "Servicio 13",
         "plagas": [
-            {"name": "Limpieza de archivo", "value": "limpieza-de-archivo", "checked": false},
-            {"name": "Limpieza de fachada", "value": "limpieza-de-fachada", "checked": false},
+            {"name": "Limpieza de a", "value": "limpieza-de-archivo", "checked": false},
+            {"name": "Limpieza de f", "value": "limpieza-de-fachada", "checked": false},
             {"name": "Limpieza general", "value": "limpieza-general", "checked": false},
-            {"name": "Pintura y fachada", "value": "pintura-y-fachada", "checked": false}
+            {"name": "Pintura y f", "value": "pintura-y-fachada", "checked": false}
         ],
         "metodos": [
             {"name": "Trabajo seguro en alturas vigente", "value": "Trabajo-seguro-en-alturas-vigente", "checked": false}
