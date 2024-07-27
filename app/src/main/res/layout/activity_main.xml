@@ -1,0 +1,92 @@
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header Layout -->
+        <RelativeLayout
+            android:id="@+id/headerLayout"
+            android:layout_width="match_parent"
+            android:layout_height="148dp"
+            android:background="@android:color/white"
+            android:padding="16dp">
+
+            <!-- Logo Image -->
+            <ImageView
+                android:id="@+id/logoImageView"
+                android:layout_width="171dp"
+                android:layout_height="85dp"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="10dp"
+                android:contentDescription="Logo"
+                android:src="@drawable/ic_logo" />
+
+            <!-- Status Text -->
+            <TextView
+                android:id="@+id/statusTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/logoImageView"
+                android:layout_alignStart="@id/logoImageView"
+                android:layout_marginTop="8dp"
+                android:text="Estado: En línea"
+                android:textColor="@color/textColor"
+                android:textSize="16sp" />
+
+            <!-- Logout Button -->
+            <Button
+                android:id="@+id/logoutButton"
+                android:layout_marginTop="20dp"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="7dp"
+                android:backgroundTint="@color/blue_medium"
+                android:padding="4dp"
+                android:text="Salir"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+        </RelativeLayout>
+
+        <!-- Search Bar -->
+        <EditText
+            android:id="@+id/searchBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:hint="Buscar..."
+            android:inputType="text"
+            android:padding="12dp"
+            android:background="@drawable/search_bar_background"
+            android:textColor="@android:color/black"
+            android:textColorHint="@android:color/darker_gray" />
+
+        <!-- Main Panel Title -->
+        <TextView
+            android:id="@+id/mainPanelTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Panel principal"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_gravity="center_horizontal"
+            android:layout_margin="16dp"
+            android:textColor="@color/textColor" />
+
+        <!-- RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:padding="8dp"
+            android:layout_marginBottom="16dp"/>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

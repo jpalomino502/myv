@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    style="@style/CardStyle">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Number of the ticket -->
+        <TextView
+            android:id="@+id/ticket_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Número del Ticket"
+            android:textStyle="bold"
+            style="@style/TextStyleTitle" />
+
+        <!-- Title of the ticket -->
+        <TextView
+            android:id="@+id/ticket_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Título del Ticket"
+            style="@style/TextStyleTitle" />
+
+        <!-- Observations -->
+        <TextView
+            android:id="@+id/ticket_observations"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Observaciones"
+            style="@style/TextStyleBody" />
+
+        <!-- Location -->
+        <TextView
+            android:id="@+id/ticket_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Ubicación"
+            style="@style/TextStyleBody" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
