@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.oscarapp"
-        minSdk = 24
+        minSdk = 21
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -42,25 +42,28 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.recyclerview)
-    implementation (libs.androidx.core)
     implementation(libs.retrofit)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.auth)
-    implementation (libs.moshi.v1120)
-    implementation (libs.moshi.kotlin)
-    implementation (libs.moshi.adapters)
+    implementation(libs.moshi.v1120)
+    implementation(libs.moshi.kotlin)
+    implementation(libs.moshi.adapters)
     implementation(libs.ktor.client.json)
-    implementation (libs.moshi)
+    implementation(libs.moshi)
     implementation(libs.ktor.client.serialization)
-    implementation (libs.gson)
-    implementation (libs.klaxon)
-    implementation (libs.moshi.kotlin.v1130)
-    implementation (libs.logging.interceptor)
-    implementation (libs.material.v140)
+    implementation(libs.gson)
+    implementation(libs.klaxon)
+    implementation(libs.moshi.kotlin.v1130)
+    implementation(libs.logging.interceptor)
+    implementation(libs.material.v140)
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.room.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+
+
 }

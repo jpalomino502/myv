@@ -70,6 +70,9 @@ class FormActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_form)
 
+        // Inicializar base64Image a un valor vacío
+        clearBase64Image()
+
         tipoDeServiciosEditText = findViewById(R.id.titulo)
         fechaEditText = findViewById(R.id.fecha)
         horaIngresoEditText = findViewById(R.id.horaingreso)
@@ -93,8 +96,11 @@ class FormActivity : AppCompatActivity() {
             signatureView.clear()
         }
 
+        btnSave = findViewById(R.id.btnSave)
+
         btnSave.setOnClickListener {
             if (isFormValid()) {
+                btnSave.isEnabled = false // Deshabilitar el botón
                 saveFormData()
             }
         }
@@ -223,7 +229,13 @@ class FormActivity : AppCompatActivity() {
         val titulo = tipoDeServiciosEditText.text.toString()
 
         val sharedPreferences = getSharedPreferences("base64_prefs", Context.MODE_PRIVATE)
-        val base64Image = sharedPreferences.getString("base64_image", "") ?: ""
+        val base64Image = sharedPreferences.getString("base64_image", "")
+
+        val firmaBitmap = signatureView.getSignatureBitmap()
+        val firmaBase64 = firmaBitmap?.let { encodeToBase64(it) } ?: ""
+
+        // Condición para verificar si base64Image está presente
+        val imageBase64 = if (base64Image.isNullOrEmpty()) "" else base64Image
 
         val serviceRequest = ServiceRequest(
             ticketId = ticket.id,
@@ -253,8 +265,8 @@ class FormActivity : AppCompatActivity() {
             nombre_asesor = findViewById<EditText>(R.id.nombre_asesor).text.toString(),
             recibi_cliente = findViewById<EditText>(R.id.recibi_cliente).text.toString(),
             nombre_tecnico = findViewById<EditText>(R.id.nombre_tecnico).text.toString(),
-            ulr_ratones = base64Image,
-            firma = signatureView.getSignatureBitmap()?.let { encodeToBase64(it) } ?: "",
+            ulr_ratones = imageBase64,
+            firma = firmaBase64,
             observaciones3 = "",
             informeserviciojson = encuestaJsonString,
             serviciosjson = serviciosJsonString,
@@ -271,6 +283,7 @@ class FormActivity : AppCompatActivity() {
         return "data:image/svg+xml;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)
     }
 
+
     private fun sendDataToServer(serviceRequest: ServiceRequest) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -281,20 +294,33 @@ class FormActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         Toast.makeText(this@FormActivity, "Datos enviados exitosamente", Toast.LENGTH_SHORT).show()
                         clearLocalData()
+                        clearBase64Image() // Limpiar base64Image después de enviar los datos
+                        btnSave.isEnabled = true // Rehabilitar el botón
                         finish()
                     } else {
                         Toast.makeText(this@FormActivity, "Error al enviar datos: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
                         saveDataLocally(serviceRequest)
+                        clearBase64Image() // Limpiar base64Image incluso si falla el envío
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    //Toast.makeText(this@FormActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
                     saveDataLocally(serviceRequest)
+                    clearBase64Image() // Limpiar base64Image en caso de excepción
                 }
             }
         }
     }
+
+
+    private fun clearBase64Image() {
+        val sharedPreferences = getSharedPreferences("base64_prefs", Context.MODE_PRIVATE)
+        with(sharedPreferences.edit()) {
+            remove("base64_image")
+            apply()
+        }
+    }
+
 
     private fun saveDataLocally(serviceRequest: ServiceRequest) {
         val moshi = Moshi.Builder()
@@ -324,10 +350,10 @@ class FormActivity : AppCompatActivity() {
 
         runOnUiThread {
             Toast.makeText(this, "Datos guardados localmente", Toast.LENGTH_SHORT).show()
+            btnSave.isEnabled = true // Rehabilitar el botón
             finish()
         }
     }
-
 
     private fun clearLocalData() {
         val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)
@@ -376,13 +402,14 @@ class FormActivity : AppCompatActivity() {
 
                 // Actualizar los datos locales después de intentar enviar todos los formularios
                 withContext(Dispatchers.Main) {
-                    val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
-                    sharedPreferences.edit().putString("service_request_data_list", updatedJson).apply()
+                    val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)).toJson(serviceRequests)
+                    val editor = sharedPreferences.edit()
+                    editor.putString("service_request_data_list", updatedJson)
+                    editor.apply()
                 }
             }
         }
     }
-
 
 
     private inner class NetworkReceiver : BroadcastReceiver() {

@@ -7,7 +7,10 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.NetworkInfo
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -15,6 +18,9 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -33,8 +39,11 @@ import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
 
+
     companion object {
         private const val CAMERA_PERMISSION_REQUEST_CODE = 100
+        private const val STORAGE_PERMISSION_REQUEST_CODE = 101
+        private const val NOTIFICATIONS_PERMISSION_REQUEST_CODE = 102
     }
 
     private lateinit var recyclerView: RecyclerView
@@ -44,6 +53,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var logoutButton: Button
     private lateinit var searchBar: EditText
     private var call: Call<TicketResponse>? = null
+
+
+    private lateinit var requestWritePermissionLauncher: ActivityResultLauncher<IntentSenderRequest>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,33 +87,98 @@ class MainActivity : AppCompatActivity() {
         fetchTickets()
         checkNetworkStatus()
 
-        // Solicitar permiso de cámara
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_REQUEST_CODE)
-        } else {
-            // Permiso ya concedido
-            //openCamera()
-        }
+        // Solicitar permisos necesarios
+        requestNecessaryPermissions()
 
         // Start DataSyncService from here
         val intent = Intent(this, DataSyncService::class.java)
         startService(intent)
         Log.d("MainActivity", "DataSyncService started from MainActivity")
 
+        // Inicializar el lanzador de solicitud de permiso de escritura
+        requestWritePermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                Toast.makeText(this, "Permiso de escritura concedido", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Permiso de escritura denegado", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
+    // Método para solicitar permisos necesarios
+    private fun requestNecessaryPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.CAMERA)
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), STORAGE_PERMISSION_REQUEST_CODE)
+        }
+
+    }
+
+    // Manejar el resultado de la solicitud de permisos
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                // Permiso concedido
-                //openCamera()
-                Toast.makeText(this, "Permiso de cámara concedido", Toast.LENGTH_SHORT).show()
-            } else {
-                // Permiso denegado
-                Toast.makeText(this, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
+        when (requestCode) {
+            CAMERA_PERMISSION_REQUEST_CODE -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    Toast.makeText(this, "Permiso de cámara concedido", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
+                }
             }
+            STORAGE_PERMISSION_REQUEST_CODE -> {
+                val readPermissionGranted = permissions.indexOf(Manifest.permission.READ_EXTERNAL_STORAGE) >= 0 &&
+                        grantResults[permissions.indexOf(Manifest.permission.READ_EXTERNAL_STORAGE)] == PackageManager.PERMISSION_GRANTED
+                if (readPermissionGranted) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        requestWritePermission()
+                    } else {
+                        Toast.makeText(this, "Permiso de almacenamiento concedido", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this, "Permiso de almacenamiento denegado", Toast.LENGTH_SHORT).show()
+                }
+            }
+            NOTIFICATIONS_PERMISSION_REQUEST_CODE -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    Toast.makeText(this, "Permiso de notificaciones concedido", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Permiso de notificaciones denegado", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun requestWritePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val uris = mutableListOf(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            )
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                uris.add(MediaStore.Downloads.EXTERNAL_CONTENT_URI)
+            }
+
+            val writeRequest = MediaStore.createWriteRequest(contentResolver, uris)
+            val intentSenderRequest = IntentSenderRequest.Builder(writeRequest).build()
+            requestWritePermissionLauncher.launch(intentSenderRequest)
+        } else {
+            // En versiones anteriores a Android 11 (API 30), no se necesita la solicitud especial
+            Toast.makeText(this, "Permiso de almacenamiento concedido", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -109,6 +186,10 @@ class MainActivity : AppCompatActivity() {
         // Aquí puedes inicializar la funcionalidad de la cámara
         Toast.makeText(this, "Cámara abierta", Toast.LENGTH_SHORT).show()
     }
+
+
+
+
 
     override fun onPause() {
         super.onPause()
@@ -197,11 +278,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun isNetworkConnected(): Boolean {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-        return networkCapabilities != null &&
-                (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                        networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                        networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            networkCapabilities != null &&
+                    (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+        } else {
+            val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
+            activeNetwork?.isConnectedOrConnecting == true
+        }
     }
 
     private fun logout() {
