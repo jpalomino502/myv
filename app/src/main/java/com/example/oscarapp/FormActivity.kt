@@ -28,6 +28,7 @@ import com.example.oscarapp.utils.FormDataPopulator
 import com.example.oscarapp.utils.FormDataStorage
 import com.example.oscarapp.utils.FormUtils
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -282,7 +283,7 @@ class FormActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@FormActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(this@FormActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
                     saveDataLocally(serviceRequest)
                 }
             }
@@ -300,13 +301,27 @@ class FormActivity : AppCompatActivity() {
         val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
-        editor.putString("service_request_data", json)
+        val existingData = sharedPreferences.getString("service_request_data_list", null)
+        val serviceRequests: MutableList<ServiceRequest> = if (existingData != null) {
+            val type = Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)
+            val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
+            listAdapter.fromJson(existingData) ?: mutableListOf()
+        } else {
+            mutableListOf()
+        }
+
+        serviceRequests.add(serviceRequest)
+
+        val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)).toJson(serviceRequests)
+        editor.putString("service_request_data_list", updatedJson)
         editor.apply()
 
         runOnUiThread {
             Toast.makeText(this, "Datos guardados localmente", Toast.LENGTH_SHORT).show()
+            finish()
         }
     }
+
 
     private fun clearLocalData() {
         val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)
@@ -319,21 +334,50 @@ class FormActivity : AppCompatActivity() {
 
     private fun checkAndSendLocalData() {
         val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)
-        val json = sharedPreferences.getString("service_request_data", null)
+        val json = sharedPreferences.getString("service_request_data_list", null)
 
         if (json != null) {
             val moshi = Moshi.Builder()
                 .add(DateJsonAdapter()) // Agrega este adaptador
                 .add(KotlinJsonAdapterFactory())
                 .build()
-            val jsonAdapter = moshi.adapter(ServiceRequest::class.java)
-            val serviceRequest = jsonAdapter.fromJson(json)
+            val type = Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)
+            val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
+            val serviceRequests = listAdapter.fromJson(json) ?: mutableListOf()
 
-            serviceRequest?.let {
-                sendDataToServer(it)
+            val serviceRequestsCopy = serviceRequests.toMutableList() // Crear una copia de la lista original
+
+            CoroutineScope(Dispatchers.IO).launch {
+                serviceRequestsCopy.forEach { serviceRequest ->
+                    try {
+                        val apiService = RetrofitClient.retrofitInstance.create(ApiService::class.java)
+                        val response = apiService.sendServiceRequest(serviceRequest)
+
+                        withContext(Dispatchers.Main) {
+                            if (response.isSuccessful) {
+                                serviceRequests.remove(serviceRequest)
+                                Toast.makeText(this@FormActivity, "Datos enviados exitosamente", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(this@FormActivity, "Error al enviar datos: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@FormActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+
+                // Actualizar los datos locales después de intentar enviar todos los formularios
+                withContext(Dispatchers.Main) {
+                    val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
+                    sharedPreferences.edit().putString("service_request_data_list", updatedJson).apply()
+                }
             }
         }
     }
+
+
 
     private inner class NetworkReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {

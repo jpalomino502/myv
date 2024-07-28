@@ -87,6 +87,8 @@ class MainActivity : AppCompatActivity() {
         // Start DataSyncService from here
         val intent = Intent(this, DataSyncService::class.java)
         startService(intent)
+        Log.d("MainActivity", "DataSyncService started from MainActivity")
+
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
