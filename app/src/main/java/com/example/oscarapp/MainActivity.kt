@@ -1,8 +1,10 @@
 package com.example.oscarapp
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
@@ -12,7 +14,10 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oscarapp.adapters.TicketAdapter
@@ -27,6 +32,10 @@ import retrofit2.Callback
 import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val CAMERA_PERMISSION_REQUEST_CODE = 100
+    }
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: TicketAdapter
@@ -65,6 +74,34 @@ class MainActivity : AppCompatActivity() {
 
         fetchTickets()
         checkNetworkStatus()
+
+        // Solicitar permiso de cámara
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_REQUEST_CODE)
+        } else {
+            // Permiso ya concedido
+            //openCamera()
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                // Permiso concedido
+                //openCamera()
+                Toast.makeText(this, "Permiso de cámara concedido", Toast.LENGTH_SHORT).show()
+            } else {
+                // Permiso denegado
+                Toast.makeText(this, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun openCamera() {
+        // Aquí puedes inicializar la funcionalidad de la cámara
+        Toast.makeText(this, "Cámara abierta", Toast.LENGTH_SHORT).show()
     }
 
     override fun onPause() {
