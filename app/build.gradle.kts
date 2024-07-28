@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.ktor.client.serialization)
     implementation (libs.gson)
     implementation (libs.klaxon)
+    implementation (libs.moshi.kotlin.v1130)
     implementation (libs.logging.interceptor)
     implementation (libs.material.v140)
     implementation(libs.firebase.crashlytics.buildtools)

@@ -1,6 +1,14 @@
 package com.example.oscarapp
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import kotlinx.coroutines.withContext
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
@@ -10,15 +18,17 @@ import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.oscarapp.models.Ticket
 import com.example.oscarapp.models.ServiceRequest
+import com.example.oscarapp.models.Ticket
 import com.example.oscarapp.network.ApiService
 import com.example.oscarapp.network.RetrofitClient
+import com.example.oscarapp.utils.DateJsonAdapter
 import com.example.oscarapp.utils.DateTimeUtils
 import com.example.oscarapp.utils.FormDataPopulator
 import com.example.oscarapp.utils.FormDataStorage
 import com.example.oscarapp.utils.FormUtils
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -48,6 +58,9 @@ class FormActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
     private lateinit var celularEditText: EditText
     private lateinit var tipoDeServiciosEditText: EditText
+    private lateinit var productoEditText: EditText
+
+    private val networkReceiver = NetworkReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +82,7 @@ class FormActivity : AppCompatActivity() {
         btnClear = findViewById(R.id.btn_clear)
         btnSave = findViewById(R.id.btnSave)
         celularEditText = findViewById(R.id.celular)
+        productoEditText = findViewById(R.id.producto)
 
         btnClear.setOnClickListener {
             signatureView.clear()
@@ -107,9 +121,19 @@ class FormActivity : AppCompatActivity() {
                 celularEditText,
                 fechaEditText,
                 tipoDeServiciosEditText,
+                productoEditText,
                 it
             )
         }
+
+        // Registrar el receptor de red
+        registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Desregistrar el receptor de red
+        unregisterReceiver(networkReceiver)
     }
 
     private fun showAlert(message: String) {
@@ -129,7 +153,15 @@ class FormActivity : AppCompatActivity() {
                 showAlert("La firma es obligatoria")
                 false
             }
-            else -> true
+            else -> {
+                val firmaBase64 = encodeToBase64(firmaBitmap)
+                if (firmaBase64.length < 4615) {
+                    showAlert("La firma es obligatoria")
+                    false
+                } else {
+                    true
+                }
+            }
         }
     }
 
@@ -235,7 +267,7 @@ class FormActivity : AppCompatActivity() {
                 val apiService = RetrofitClient.retrofitInstance.create(ApiService::class.java)
                 val response = apiService.sendServiceRequest(serviceRequest)
 
-                runOnUiThread {
+                withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
                         Toast.makeText(this@FormActivity, "Datos enviados exitosamente", Toast.LENGTH_SHORT).show()
                         clearLocalData()
@@ -246,14 +278,21 @@ class FormActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@FormActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
-                saveDataLocally(serviceRequest)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@FormActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
+                    saveDataLocally(serviceRequest)
+                }
             }
         }
     }
 
     private fun saveDataLocally(serviceRequest: ServiceRequest) {
-        val json = serviceRequest.toJson()
+        val moshi = Moshi.Builder()
+            .add(DateJsonAdapter()) // Agrega este adaptador
+            .add(KotlinJsonAdapterFactory())
+            .build()
+        val jsonAdapter = moshi.adapter(ServiceRequest::class.java)
+        val json = jsonAdapter.toJson(serviceRequest)
 
         val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)
         val editor = sharedPreferences.edit()
@@ -266,7 +305,6 @@ class FormActivity : AppCompatActivity() {
         }
     }
 
-
     private fun clearLocalData() {
         val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)
         with(sharedPreferences.edit()) {
@@ -275,10 +313,46 @@ class FormActivity : AppCompatActivity() {
         }
         Log.d("FormActivity", "Datos locales borrados de SharedPreferences")
     }
+
+    private fun checkAndSendLocalData() {
+        val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)
+        val json = sharedPreferences.getString("service_request_data", null)
+
+        if (json != null) {
+            val moshi = Moshi.Builder()
+                .add(DateJsonAdapter()) // Agrega este adaptador
+                .add(KotlinJsonAdapterFactory())
+                .build()
+            val jsonAdapter = moshi.adapter(ServiceRequest::class.java)
+            val serviceRequest = jsonAdapter.fromJson(json)
+
+            serviceRequest?.let {
+                sendDataToServer(it)
+            }
+        }
+    }
+
+    private inner class NetworkReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (isInternetAvailable()) {
+                checkAndSendLocalData()
+            }
+        }
+    }
+
+    private fun isInternetAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network: Network = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities: NetworkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
 }
 
 fun ServiceRequest.toJson(): String {
-    val moshi = Moshi.Builder().build()
+    val moshi = Moshi.Builder()
+        .add(DateJsonAdapter())
+        .add(KotlinJsonAdapterFactory())
+        .build()
     val jsonAdapter = moshi.adapter(ServiceRequest::class.java)
     return jsonAdapter.toJson(this)
 }

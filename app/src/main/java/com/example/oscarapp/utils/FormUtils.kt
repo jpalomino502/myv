@@ -25,6 +25,7 @@ object FormUtils {
         celularEditText: EditText,
         fechaEditText: EditText,
         tipoDeServiciosEditText: EditText,
+        productoEditText: EditText,
         ticket: Ticket
     ) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -37,6 +38,7 @@ object FormUtils {
         telefonoEditText.setText(ticket.cliente?.telefono)
         celularEditText.setText(ticket.cliente?.telefono)
         tipoDeServiciosEditText.setText(ticket.titulo)
+        productoEditText.setText(ticket.producto)
     }
 
     fun showPhotoDialog(context: Context) {

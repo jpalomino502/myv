@@ -83,6 +83,10 @@ class MainActivity : AppCompatActivity() {
             // Permiso ya concedido
             //openCamera()
         }
+
+        // Start DataSyncService from here
+        val intent = Intent(this, DataSyncService::class.java)
+        startService(intent)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
