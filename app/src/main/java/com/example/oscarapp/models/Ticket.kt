@@ -17,7 +17,7 @@ data class Ticket(
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("updated_at") val updatedAt: String,
     @SerializedName("cliente") val cliente: Cliente,
-    @SerializedName("producto") val producto: String // Added product field
+    @SerializedName("producto") val producto: String
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         id = parcel.readString() ?: "",

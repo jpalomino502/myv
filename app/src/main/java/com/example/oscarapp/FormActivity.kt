@@ -54,6 +54,7 @@ class FormActivity : AppCompatActivity() {
     private lateinit var signatureView: SignatureView
     private lateinit var nitEditText: EditText
     private lateinit var telefonoEditText: EditText
+    private lateinit var nombre_tecnico: EditText
     private lateinit var btnClear: Button
     private lateinit var btnSave: Button
     private lateinit var celularEditText: EditText
@@ -79,6 +80,7 @@ class FormActivity : AppCompatActivity() {
         direccionEditText = findViewById(R.id.direccion)
         nitEditText = findViewById(R.id.nit)
         telefonoEditText = findViewById(R.id.telefono)
+        nombre_tecnico = findViewById(R.id.nombre_tecnico)
         btnClear = findViewById(R.id.btn_clear)
         btnSave = findViewById(R.id.btnSave)
         celularEditText = findViewById(R.id.celular)
@@ -122,6 +124,7 @@ class FormActivity : AppCompatActivity() {
                 fechaEditText,
                 tipoDeServiciosEditText,
                 productoEditText,
+                nombre_tecnico,
                 it
             )
         }

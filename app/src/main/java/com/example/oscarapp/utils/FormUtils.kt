@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.provider.MediaStore
 import android.widget.EditText
 import com.example.oscarapp.models.Ticket
@@ -26,6 +27,7 @@ object FormUtils {
         fechaEditText: EditText,
         tipoDeServiciosEditText: EditText,
         productoEditText: EditText,
+        nombre_tecnico: EditText,
         ticket: Ticket
     ) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -39,6 +41,10 @@ object FormUtils {
         celularEditText.setText(ticket.cliente?.telefono)
         tipoDeServiciosEditText.setText(ticket.titulo)
         productoEditText.setText(ticket.producto)
+
+        val sharedPreferences: SharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        val userName = sharedPreferences.getString("userName", "")
+        nombre_tecnico.setText(userName)
     }
 
     fun showPhotoDialog(context: Context) {

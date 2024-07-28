@@ -13,7 +13,6 @@ import com.example.oscarapp.models.UserResponse
 import com.example.oscarapp.network.ApiService
 import com.example.oscarapp.network.RetrofitClient
 import com.google.android.material.textfield.TextInputEditText
-
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -64,14 +63,16 @@ class LoginActivity : AppCompatActivity() {
                     val userResponse = response.body()
                     if (userResponse != null && userResponse.ok) {
                         val userId = userResponse.user?.id?.toString() ?: ""
+                        val userName = userResponse.user?.name ?: ""
                         val accessToken = userResponse.accessToken ?: ""
 
                         with(sharedPreferences.edit()) {
                             putBoolean("isLoggedIn", true)
                             putString("userId", userId)
+                            putString("userName", userName) // Guardar el nombre del usuario
                             putString("accessToken", accessToken)
                             apply() // Preferido para operaciones en segundo plano
-                            Log.d("LOGIN", "User ID saved: $userId")
+                            Log.d("LOGIN", "User ID saved: $userId, User Name saved: $userName")
                         }
 
                         val intent = Intent(this@LoginActivity, MainActivity::class.java)
@@ -103,3 +104,4 @@ class LoginActivity : AppCompatActivity() {
                         networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
     }
 }
+
