@@ -175,38 +175,48 @@ object FormDataPopulator {
                 setPadding(0, 0, 0, 8)
             }
 
-            when {
-                itemName == "Cantidad" -> {
-                    val cantidadEditText = EditText(context).apply {
-                        inputType = InputType.TYPE_CLASS_NUMBER
-                        hint = "Cantidad"
-                        setPadding(16, 16, 16, 16)
-                        setTextColor(Color.BLACK)
-                        setHintTextColor(Color.BLACK)
-                        setText("")
-                    }
-                    itemLayout.addView(cantidadEditText)
+            if (itemName == "Cantidad") {
+                val cantidadEditText = EditText(context).apply {
+                    inputType = InputType.TYPE_CLASS_NUMBER
+                    hint = "Cantidad"
+                    setPadding(16, 16, 16, 16)
+                    setTextColor(Color.BLACK)
+                    setHintTextColor(Color.BLACK)
+                    setText("")
                 }
-                itemName == "Foto" && servicioName == "Servicio 10" -> {
+                itemLayout.addView(cantidadEditText)
+
+                val imageView = ImageView(context).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        400
+                    )
+                    setPadding(16, 16, 16, 16)
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                }
+                sectionLayout.addView(imageView)
+
+                if (servicioName == "Servicio 10") {
                     val fotoButton = Button(context).apply {
                         text = "Tomar o Seleccionar Foto"
-                        setOnClickListener { FormUtils.showPhotoDialog(context) }
+                        setOnClickListener {
+                            FormUtils.showPhotoDialog(context, imageView) { base64Image ->
+                            }
+                        }
                         setPadding(16, 16, 16, 16)
                         setBackgroundColor(Color.BLACK)
                         setTextColor(Color.WHITE)
                     }
                     itemLayout.addView(fotoButton)
                 }
-                else -> {
-                    val checkBox = CheckBox(context).apply {
-                        text = itemName
-                        isChecked = itemChecked
-                        setTextColor(Color.BLACK)
-                        buttonTintList = ColorStateList.valueOf(Color.BLACK)
-                    }
-
-                    itemLayout.addView(checkBox)
+            } else if (itemName != "Foto") {
+                val checkBox = CheckBox(context).apply {
+                    text = itemName
+                    isChecked = itemChecked
+                    setTextColor(Color.BLACK)
+                    buttonTintList = ColorStateList.valueOf(Color.BLACK)
                 }
+                itemLayout.addView(checkBox)
             }
             sectionLayout.addView(itemLayout)
         }

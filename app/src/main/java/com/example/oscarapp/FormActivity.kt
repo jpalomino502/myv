@@ -14,6 +14,7 @@ import android.util.Base64
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.Toast
@@ -60,6 +61,7 @@ class FormActivity : AppCompatActivity() {
     private lateinit var celularEditText: EditText
     private lateinit var tipoDeServiciosEditText: EditText
     private lateinit var productoEditText: EditText
+    private var currentImageView: ImageView? = null
 
     private val networkReceiver = NetworkReceiver()
 
@@ -218,6 +220,10 @@ class FormActivity : AppCompatActivity() {
         val serviciosJsonString = FormDataStorage.obtenerServiciosSeleccionados(serviciosContainer)
 
         val titulo = tipoDeServiciosEditText.text.toString()
+
+        val sharedPreferences = getSharedPreferences("base64_prefs", Context.MODE_PRIVATE)
+        val base64Image = sharedPreferences.getString("base64_image", "") ?: ""
+
         val serviceRequest = ServiceRequest(
             ticketId = ticket.id,
             serviceControl = ticket.numTicket,
@@ -246,7 +252,7 @@ class FormActivity : AppCompatActivity() {
             nombre_asesor = findViewById<EditText>(R.id.nombre_asesor).text.toString(),
             recibi_cliente = findViewById<EditText>(R.id.recibi_cliente).text.toString(),
             nombre_tecnico = findViewById<EditText>(R.id.nombre_tecnico).text.toString(),
-            ulr_ratones = "",
+            ulr_ratones = base64Image,
             firma = signatureView.getSignatureBitmap()?.let { encodeToBase64(it) } ?: "",
             observaciones3 = "",
             informeserviciojson = encuestaJsonString,
@@ -348,6 +354,11 @@ class FormActivity : AppCompatActivity() {
         val network: Network = connectivityManager.activeNetwork ?: return false
         val networkCapabilities: NetworkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
         return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        FormUtils.handleImageResult(this, requestCode, resultCode, data)
     }
 }
 
