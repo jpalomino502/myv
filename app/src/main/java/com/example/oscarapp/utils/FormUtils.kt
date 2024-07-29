@@ -11,11 +11,13 @@ import android.provider.MediaStore
 import android.util.Base64
 import android.widget.EditText
 import android.widget.ImageView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.oscarapp.models.Ticket
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import java.io.InputStream
 
 object FormUtils {
     private const val REQUEST_IMAGE_CAPTURE = 1
@@ -34,9 +36,9 @@ object FormUtils {
         fechaEditText: EditText,
         tipoDeServiciosEditText: EditText,
         productoEditText: EditText,
-        nombre_tecnico: EditText,
-        autorizacion_clienteEditText: EditText,
-        recibi_clienteEditText: EditText,
+        nombreTecnico: EditText,
+        autorizacionClienteEditText: EditText,
+        recibiClienteEditText: EditText,
         ticket: Ticket
     ) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -50,12 +52,12 @@ object FormUtils {
         celularEditText.setText(ticket.cliente?.telefono)
         tipoDeServiciosEditText.setText(ticket.titulo)
         productoEditText.setText(ticket.producto)
-        autorizacion_clienteEditText.setText(ticket.cliente.nombre)
-        recibi_clienteEditText.setText(ticket.cliente.nombre)
+        autorizacionClienteEditText.setText(ticket.cliente?.nombre)
+        recibiClienteEditText.setText(ticket.cliente?.nombre)
 
         val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val userName = sharedPreferences.getString("userName", "")
-        nombre_tecnico.setText(userName)
+        nombreTecnico.setText(userName)
     }
 
     fun showPhotoDialog(context: Context, imageView: ImageView?, callback: (String) -> Unit) {
@@ -77,14 +79,20 @@ object FormUtils {
     private fun takePhoto(context: Context) {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         if (intent.resolveActivity(context.packageManager) != null) {
-            (context as? Activity)?.startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+            (context as? Activity)?.let {
+                ActivityCompat.requestPermissions(it, arrayOf(android.Manifest.permission.CAMERA), REQUEST_IMAGE_CAPTURE)
+                it.startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+            }
         }
     }
 
     private fun selectPhoto(context: Context) {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         if (intent.resolveActivity(context.packageManager) != null) {
-            (context as? Activity)?.startActivityForResult(intent, REQUEST_IMAGE_SELECT)
+            (context as? Activity)?.let {
+                ActivityCompat.requestPermissions(it, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), REQUEST_IMAGE_SELECT)
+                it.startActivityForResult(intent, REQUEST_IMAGE_SELECT)
+            }
         }
     }
 
@@ -120,8 +128,7 @@ object FormUtils {
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
         val byteArray = byteArrayOutputStream.toByteArray()
-        val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
-        return "data:image/svg+xml;base64,$base64String"
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP)
     }
 
     private fun saveBase64ToPreferences(context: Context, base64Image: String) {
