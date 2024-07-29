@@ -29,16 +29,24 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oscarapp.adapters.TicketAdapter
+import com.example.oscarapp.models.ServiceRequest
 import com.example.oscarapp.models.Ticket
 import com.example.oscarapp.models.TicketResponse
 import com.example.oscarapp.network.ApiService
 import com.example.oscarapp.network.RetrofitClient
+import com.example.oscarapp.utils.DateJsonAdapter
 import com.example.oscarapp.utils.ServiceUtils
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -306,14 +314,65 @@ class MainActivity : AppCompatActivity() {
 
     private fun sendPendingServiceRequests() {
         if (isNetworkConnected()) {
-            ServiceUtils.sendPendingServiceRequests(this)
+            CoroutineScope(Dispatchers.IO).launch {
+                val serviceRequestsJson = sharedPreferences.getString("service_request_data_list", null)
+                if (serviceRequestsJson != null) {
+                    val moshi = Moshi.Builder()
+                        .add(DateJsonAdapter())
+                        .build()
+                    val type = Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)
+                    val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
+                    val serviceRequests = listAdapter.fromJson(serviceRequestsJson) ?: mutableListOf()
+
+                    serviceRequests.forEach { serviceRequest ->
+                        try {
+                            val apiService = RetrofitClient.retrofitInstance.create(ApiService::class.java)
+                            val response = apiService.sendServiceRequest(serviceRequest)
+
+                            withContext(Dispatchers.Main) {
+                                if (response.isSuccessful) {
+                                    Log.d("MainActivity", "Datos enviados exitosamente")
+                                    removeSentData(serviceRequest)
+                                } else {
+                                    Toast.makeText(this@MainActivity, "Error al enviar datos: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@MainActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                    clearLocalData()
+                }
+            }
         }
+    }
+
+    private fun removeSentData(serviceRequest: ServiceRequest) {
+        val serviceRequestsJson = sharedPreferences.getString("service_request_data_list", null)
+        val moshi = Moshi.Builder()
+            .add(DateJsonAdapter())
+            .build()
+        val type = Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)
+        val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
+        val serviceRequests = listAdapter.fromJson(serviceRequestsJson) ?: mutableListOf()
+
+        serviceRequests.remove(serviceRequest)
+
+        val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
+        sharedPreferences.edit().putString("service_request_data_list", updatedJson).apply()
+    }
+
+    private fun clearLocalData() {
+        sharedPreferences.edit().clear().apply()
+        Log.d("MainActivity", "Datos locales borrados de SharedPreferences")
     }
 
     private inner class NetworkReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (isNetworkConnected()) {
-                ServiceUtils.sendPendingServiceRequests(this@MainActivity)
+                sendPendingServiceRequests()
             }
         }
     }
