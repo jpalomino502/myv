@@ -1,5 +1,6 @@
 package com.example.oscarapp.utils
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -12,7 +13,7 @@ import org.json.JSONObject
 
 object FormDataPopulator {
 
-    fun populateServicios(context: Context, container: LinearLayout) {
+    fun populateServicios(activity: Activity, container: LinearLayout) {
         try {
             val serviciosArray = JSONArray(JsonData.JSON_DATA)
             Log.d("FormDataPopulator", "Servicios JSON: $serviciosArray")
@@ -20,14 +21,14 @@ object FormDataPopulator {
             for (i in 0 until serviciosArray.length()) {
                 val servicio = serviciosArray.getJSONObject(i)
                 Log.d("FormDataPopulator", "Procesando servicio: ${servicio.optString("servicio")}")
-                addServicioSection(context, container, servicio)
+                addServicioSection(activity, container, servicio)
             }
         } catch (e: JSONException) {
             e.printStackTrace()
         }
     }
 
-    fun populateEncuesta(context: Context, container: LinearLayout) {
+    fun populateEncuesta(activity: Activity, container: LinearLayout) {
         try {
             val encuestaArray = JSONArray(JsonData.INFORME_SERVICIOS_JSON)
 
@@ -36,25 +37,25 @@ object FormDataPopulator {
                 val label = item.optString("label", "Sin etiqueta")
                 val options = item.optJSONArray("options") ?: JSONArray()
 
-                val encuestaLayout = LinearLayout(context).apply {
+                val encuestaLayout = LinearLayout(activity).apply {
                     orientation = LinearLayout.VERTICAL
                     setPadding(0, 0, 0, 16)
                     elevation = 2f
                 }
-                val questionLabel = TextView(context).apply {
+                val questionLabel = TextView(activity).apply {
                     text = label
                     textSize = 18f
                     setTextColor(Color.BLACK)
                 }
                 encuestaLayout.addView(questionLabel)
 
-                val radioGroup = RadioGroup(context).apply {
+                val radioGroup = RadioGroup(activity).apply {
                     orientation = RadioGroup.HORIZONTAL
                 }
 
                 for (j in 0 until options.length()) {
                     val option = options.getJSONObject(j)
-                    val radioButton = RadioButton(context).apply {
+                    val radioButton = RadioButton(activity).apply {
                         text = option.optString("label", "Opción")
                         isChecked = option.optBoolean("checked", false)
                         setTextColor(Color.BLACK)
@@ -71,11 +72,11 @@ object FormDataPopulator {
         }
     }
 
-    fun populateEquipoProteccion(context: Context, container: LinearLayout) {
+    fun populateEquipoProteccion(activity: Activity, container: LinearLayout) {
         try {
             val equipoArray = JSONArray(JsonData.EQUIPO_JSON)
 
-            val equipoHeader = TextView(context).apply {
+            val equipoHeader = TextView(activity).apply {
                 text = "Equipos de Protección"
                 textSize = 18f
                 setTextColor(Color.BLACK)
@@ -88,12 +89,12 @@ object FormDataPopulator {
                 val name = item.optString("name", "Sin nombre")
                 val checked = item.optBoolean("checked", false)
 
-                val equipoLayout = LinearLayout(context).apply {
+                val equipoLayout = LinearLayout(activity).apply {
                     orientation = LinearLayout.HORIZONTAL
                     setPadding(0, 0, 0, 16)
                 }
 
-                val checkBox = CheckBox(context).apply {
+                val checkBox = CheckBox(activity).apply {
                     text = name
                     isChecked = checked
                     setTextColor(Color.BLACK)
@@ -108,7 +109,7 @@ object FormDataPopulator {
         }
     }
 
-    private fun addServicioSection(context: Context, container: LinearLayout, servicio: JSONObject) {
+    private fun addServicioSection(activity: Activity, container: LinearLayout, servicio: JSONObject) {
         try {
             val servicioName = servicio.optString("servicio", "Sin nombre")
             Log.d("FormDataPopulator", "Añadiendo sección para servicio: $servicioName")
@@ -117,13 +118,13 @@ object FormDataPopulator {
             val metodosArray = servicio.optJSONArray("metodos") ?: JSONArray()
             val gradosArray = servicio.optJSONArray("grados") ?: JSONArray()
 
-            val servicioLayout = LinearLayout(context).apply {
+            val servicioLayout = LinearLayout(activity).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(0, 0, 0, 16)
                 elevation = 2f
             }
 
-            val servicioHeader = TextView(context).apply {
+            val servicioHeader = TextView(activity).apply {
                 text = servicioName
                 textSize = 20f
                 setTextColor(Color.BLACK)
@@ -131,13 +132,13 @@ object FormDataPopulator {
             servicioLayout.addView(servicioHeader)
 
             if (plagasArray.length() > 0) {
-                addSectionItems(context, servicioLayout, plagasArray, "Plagas", servicioName)
+                addSectionItems(activity, servicioLayout, plagasArray, "Plagas", servicioName)
             }
             if (metodosArray.length() > 0) {
-                addSectionItems(context, servicioLayout, metodosArray, "Métodos", servicioName)
+                addSectionItems(activity, servicioLayout, metodosArray, "Métodos", servicioName)
             }
             if (gradosArray.length() > 0) {
-                addGradosSection(context, servicioLayout, gradosArray)
+                addGradosSection(activity, servicioLayout, gradosArray)
             }
 
             container.addView(servicioLayout)
@@ -147,17 +148,17 @@ object FormDataPopulator {
     }
 
     private fun addSectionItems(
-        context: Context,
+        activity: Activity,
         layout: LinearLayout,
         items: JSONArray,
         sectionName: String,
         servicioName: String
     ) {
-        val sectionLayout = LinearLayout(context).apply {
+        val sectionLayout = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 0, 0, 16)
         }
-        val sectionHeader = TextView(context).apply {
+        val sectionHeader = TextView(activity).apply {
             text = sectionName
             textSize = 18f
             setTextColor(Color.BLACK)
@@ -170,13 +171,13 @@ object FormDataPopulator {
             val itemChecked = item.optBoolean("checked", false)
             val itemValue = item.optString("value", "")
 
-            val itemLayout = LinearLayout(context).apply {
+            val itemLayout = LinearLayout(activity).apply {
                 orientation = LinearLayout.HORIZONTAL
                 setPadding(0, 0, 0, 8)
             }
 
             if (itemName == "Cantidad") {
-                val cantidadEditText = EditText(context).apply {
+                val cantidadEditText = EditText(activity).apply {
                     inputType = InputType.TYPE_CLASS_NUMBER
                     hint = "Cantidad"
                     setPadding(16, 16, 16, 16)
@@ -186,7 +187,7 @@ object FormDataPopulator {
                 }
                 itemLayout.addView(cantidadEditText)
 
-                val imageView = ImageView(context).apply {
+                val imageView = ImageView(activity).apply {
                     layoutParams = LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         400
@@ -197,10 +198,11 @@ object FormDataPopulator {
                 sectionLayout.addView(imageView)
 
                 if (servicioName == "Servicio 10") {
-                    val fotoButton = Button(context).apply {
+                    val fotoButton = Button(activity).apply {
                         text = "Tomar o Seleccionar Foto"
                         setOnClickListener {
-                            FormUtils.showPhotoDialog(context, imageView) { base64Image ->
+                            FormUtils.showPhotoDialog(activity, imageView) { base64Image ->
+                                // Aquí puedes manejar la imagen en formato base64
                             }
                         }
                         setPadding(16, 16, 16, 16)
@@ -210,7 +212,7 @@ object FormDataPopulator {
                     itemLayout.addView(fotoButton)
                 }
             } else if (itemName != "Foto") {
-                val checkBox = CheckBox(context).apply {
+                val checkBox = CheckBox(activity).apply {
                     text = itemName
                     isChecked = itemChecked
                     setTextColor(Color.BLACK)
@@ -223,19 +225,19 @@ object FormDataPopulator {
         layout.addView(sectionLayout)
     }
 
-    private fun addGradosSection(context: Context, layout: LinearLayout, gradosArray: JSONArray) {
-        val gradosLayout = LinearLayout(context).apply {
+    private fun addGradosSection(activity: Activity, layout: LinearLayout, gradosArray: JSONArray) {
+        val gradosLayout = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 0, 0, 16)
         }
-        val gradosHeader = TextView(context).apply {
+        val gradosHeader = TextView(activity).apply {
             text = "Grados"
             textSize = 18f
             setTextColor(Color.BLACK)
         }
         gradosLayout.addView(gradosHeader)
 
-        val radioGroup = RadioGroup(context).apply {
+        val radioGroup = RadioGroup(activity).apply {
             orientation = RadioGroup.HORIZONTAL
         }
 
@@ -244,7 +246,7 @@ object FormDataPopulator {
             val itemName = item.optString("name", "Sin nombre")
             val itemChecked = item.optBoolean("checked", false)
 
-            val radioButton = RadioButton(context).apply {
+            val radioButton = RadioButton(activity).apply {
                 text = itemName
                 isChecked = itemChecked
                 setTextColor(Color.BLACK)
