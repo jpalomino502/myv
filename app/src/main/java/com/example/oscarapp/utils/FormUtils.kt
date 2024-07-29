@@ -8,21 +8,18 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.provider.MediaStore
 import android.util.Base64
 import android.util.Log
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.oscarapp.PhotoGalleryActivity
 import com.example.oscarapp.models.Ticket
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
 object FormUtils {
-    const val REQUEST_IMAGE_CAPTURE = 1
     const val REQUEST_IMAGE_SELECT = 2
     private const val PERMISSION_REQUEST_CODE = 100
     private var imageView: ImageView? = null
@@ -66,59 +63,31 @@ object FormUtils {
     fun showPhotoDialog(activity: Activity, imageView: ImageView?, callback: (String) -> Unit) {
         this.imageView = imageView
         this.imageCallback = callback
-        val options = arrayOf("Tomar Foto", "Seleccionar desde Galería", "Cancelar")
+        val options = arrayOf("Seleccionar desde Explorador de Archivos", "Cancelar")
         val builder = AlertDialog.Builder(activity)
         builder.setTitle("Seleccione una opción")
         builder.setItems(options) { dialog, which ->
             when (which) {
                 0 -> {
-                    if (ContextCompat.checkSelfPermission(activity, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                        ActivityCompat.requestPermissions(activity, arrayOf(android.Manifest.permission.CAMERA), PERMISSION_REQUEST_CODE)
-                    } else {
-                        takePhoto(activity)
-                    }
+                    openFileExplorer(activity)
                 }
-                1 -> {
-                    val intent = Intent(activity, PhotoGalleryActivity::class.java)
-                    activity.startActivityForResult(intent, REQUEST_IMAGE_SELECT)
-                }
-                2 -> dialog.dismiss()
+                1 -> dialog.dismiss()
             }
         }
         builder.show()
     }
 
-
-    private fun takePhoto(activity: Activity) {
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        if (intent.resolveActivity(activity.packageManager) != null) {
-            activity.startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
-        }
-    }
-
-    private fun selectPhoto(activity: Activity) {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        if (intent.resolveActivity(activity.packageManager) != null) {
-            activity.startActivityForResult(intent, REQUEST_IMAGE_SELECT)
-        }
+    private fun openFileExplorer(activity: Activity) {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "image/*"
+        activity.startActivityForResult(Intent.createChooser(intent, "Seleccionar imagen"), REQUEST_IMAGE_SELECT)
     }
 
     fun handleImageResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
             when (requestCode) {
-                REQUEST_IMAGE_CAPTURE -> {
-                    val extras = data?.extras
-                    val imageBitmap = extras?.get("data") as? Bitmap
-                    imageBitmap?.let {
-                        Log.d("FormUtils", "Captured image bitmap")
-                        imageView?.setImageBitmap(it)
-                        val base64Image = bitmapToBase64(it)
-                        saveBase64ToPreferences(activity, base64Image)
-                        imageCallback?.invoke(base64Image)
-                    } ?: Log.e("FormUtils", "No bitmap received from camera")
-                }
                 REQUEST_IMAGE_SELECT -> {
-                    val imageUri: Uri? = data?.getStringExtra("selectedImageUri")?.let { Uri.parse(it) }
+                    val imageUri: Uri? = data?.data
                     Log.d("FormUtils", "Selected image URI: $imageUri")
                     imageUri?.let {
                         val inputStream = activity.contentResolver.openInputStream(it)
@@ -132,7 +101,7 @@ object FormUtils {
                         } else {
                             Log.e("FormUtils", "Failed to decode bitmap from URI")
                         }
-                    } ?: Log.e("FormUtils", "No URI received from gallery")
+                    } ?: Log.e("FormUtils", "No URI received from file explorer")
                 }
             }
         } else {
