@@ -199,10 +199,9 @@ object FormDataPopulator {
 
                 if (servicioName == "Servicio 10") {
                     val fotoButton = Button(activity).apply {
-                        text = "Tomar o Seleccionar Foto"
+                        text = "Seleccionar Foto"
                         setOnClickListener {
                             FormUtils.showPhotoDialog(activity, imageView) { base64Image ->
-                                // Aquí puedes manejar la imagen en formato base64
                             }
                         }
                         setPadding(16, 16, 16, 16)

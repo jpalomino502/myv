@@ -160,15 +160,6 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
                 }
             }
-            STORAGE_PERMISSION_REQUEST_CODE -> {
-                val readPermissionGranted = permissions.indexOf(Manifest.permission.READ_EXTERNAL_STORAGE) >= 0 &&
-                        grantResults[permissions.indexOf(Manifest.permission.READ_EXTERNAL_STORAGE)] == PackageManager.PERMISSION_GRANTED
-                if (readPermissionGranted) {
-                    requestWritePermission()
-                } else {
-                    Toast.makeText(this, "Permiso de almacenamiento denegado", Toast.LENGTH_SHORT).show()
-                }
-            }
             NOTIFICATIONS_PERMISSION_REQUEST_CODE -> {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                     Toast.makeText(this, "Permiso de notificaciones concedido", Toast.LENGTH_SHORT).show()
@@ -374,9 +365,7 @@ class MainActivity : AppCompatActivity() {
 
     private inner class NetworkReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (isNetworkConnected()) {
-                sendPendingServiceRequests()
-            }
+            checkNetworkStatus() // Actualiza el estado de la red al recibir una notificación
         }
     }
 }
