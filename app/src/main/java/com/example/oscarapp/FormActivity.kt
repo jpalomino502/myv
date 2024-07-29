@@ -62,6 +62,13 @@ class FormActivity : AppCompatActivity() {
     private lateinit var celularEditText: EditText
     private lateinit var tipoDeServiciosEditText: EditText
     private lateinit var productoEditText: EditText
+    private lateinit var autorizacion_clienteEditText: EditText
+    private lateinit var recibi_clienteEditText: EditText
+
+
+
+
+
     private var currentImageView: ImageView? = null
 
     private val networkReceiver = NetworkReceiver()
@@ -91,6 +98,10 @@ class FormActivity : AppCompatActivity() {
         btnSave = findViewById(R.id.btnSave)
         celularEditText = findViewById(R.id.celular)
         productoEditText = findViewById(R.id.producto)
+        recibi_clienteEditText = findViewById(R.id.recibi_cliente)
+
+
+        autorizacion_clienteEditText = findViewById(R.id.autorizacion_cliente)
 
         btnClear.setOnClickListener {
             signatureView.clear()
@@ -134,6 +145,8 @@ class FormActivity : AppCompatActivity() {
                 tipoDeServiciosEditText,
                 productoEditText,
                 nombre_tecnico,
+                autorizacion_clienteEditText,
+                recibi_clienteEditText,
                 it
             )
         }

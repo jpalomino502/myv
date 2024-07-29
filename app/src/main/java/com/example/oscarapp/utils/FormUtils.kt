@@ -35,6 +35,8 @@ object FormUtils {
         tipoDeServiciosEditText: EditText,
         productoEditText: EditText,
         nombre_tecnico: EditText,
+        autorizacion_clienteEditText: EditText,
+        recibi_clienteEditText: EditText,
         ticket: Ticket
     ) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -48,6 +50,8 @@ object FormUtils {
         celularEditText.setText(ticket.cliente?.telefono)
         tipoDeServiciosEditText.setText(ticket.titulo)
         productoEditText.setText(ticket.producto)
+        autorizacion_clienteEditText.setText(ticket.cliente.nombre)
+        recibi_clienteEditText.setText(ticket.cliente.nombre)
 
         val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val userName = sharedPreferences.getString("userName", "")
