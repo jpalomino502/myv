@@ -15,17 +15,16 @@ import android.widget.EditText
 import android.widget.ImageView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.oscarapp.PhotoGalleryActivity
 import com.example.oscarapp.models.Ticket
 import java.io.ByteArrayOutputStream
-import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
 object FormUtils {
     const val REQUEST_IMAGE_CAPTURE = 1
     const val REQUEST_IMAGE_SELECT = 2
-    const val PERMISSION_REQUEST_CODE = 100
-    var currentPermissionRequest: Int? = null
+    private const val PERMISSION_REQUEST_CODE = 100
     private var imageView: ImageView? = null
     private var imageCallback: ((String) -> Unit)? = null
 
@@ -45,7 +44,6 @@ object FormUtils {
         recibiClienteEditText: EditText,
         ticket: Ticket
     ) {
-        Log.d("FormUtils", "Autofilling form with ticket data")
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         fechaEditText.setText(currentDate)
 
@@ -63,7 +61,6 @@ object FormUtils {
         val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val userName = sharedPreferences.getString("userName", "")
         nombreTecnico.setText(userName)
-        Log.d("FormUtils", "Form autofilled successfully")
     }
 
     fun showPhotoDialog(activity: Activity, imageView: ImageView?, callback: (String) -> Unit) {
@@ -75,7 +72,6 @@ object FormUtils {
         builder.setItems(options) { dialog, which ->
             when (which) {
                 0 -> {
-                    currentPermissionRequest = REQUEST_IMAGE_CAPTURE
                     if (ContextCompat.checkSelfPermission(activity, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                         ActivityCompat.requestPermissions(activity, arrayOf(android.Manifest.permission.CAMERA), PERMISSION_REQUEST_CODE)
                     } else {
@@ -83,12 +79,8 @@ object FormUtils {
                     }
                 }
                 1 -> {
-                    currentPermissionRequest = REQUEST_IMAGE_SELECT
-                    if (ContextCompat.checkSelfPermission(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                        ActivityCompat.requestPermissions(activity, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSION_REQUEST_CODE)
-                    } else {
-                        selectPhoto(activity)
-                    }
+                    val intent = Intent(activity, PhotoGalleryActivity::class.java)
+                    activity.startActivityForResult(intent, REQUEST_IMAGE_SELECT)
                 }
                 2 -> dialog.dismiss()
             }
@@ -96,23 +88,18 @@ object FormUtils {
         builder.show()
     }
 
-    fun takePhoto(activity: Activity) {
-        Log.d("FormUtils", "Taking photo")
+
+    private fun takePhoto(activity: Activity) {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         if (intent.resolveActivity(activity.packageManager) != null) {
             activity.startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
-        } else {
-            Log.e("FormUtils", "No activity found to handle take photo intent")
         }
     }
 
-    fun selectPhoto(activity: Activity) {
-        Log.d("FormUtils", "Selecting photo from gallery")
+    private fun selectPhoto(activity: Activity) {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         if (intent.resolveActivity(activity.packageManager) != null) {
             activity.startActivityForResult(intent, REQUEST_IMAGE_SELECT)
-        } else {
-            Log.e("FormUtils", "No activity found to handle select photo intent")
         }
     }
 
@@ -120,40 +107,40 @@ object FormUtils {
         if (resultCode == Activity.RESULT_OK) {
             when (requestCode) {
                 REQUEST_IMAGE_CAPTURE -> {
-                    Log.d("FormUtils", "Handling image capture result")
                     val extras = data?.extras
                     val imageBitmap = extras?.get("data") as? Bitmap
                     imageBitmap?.let {
+                        Log.d("FormUtils", "Captured image bitmap")
                         imageView?.setImageBitmap(it)
                         val base64Image = bitmapToBase64(it)
                         saveBase64ToPreferences(activity, base64Image)
                         imageCallback?.invoke(base64Image)
-                    } ?: run {
-                        Log.e("FormUtils", "Failed to capture image")
-                    }
+                    } ?: Log.e("FormUtils", "No bitmap received from camera")
                 }
                 REQUEST_IMAGE_SELECT -> {
-                    Log.d("FormUtils", "Handling image selection result")
-                    val imageUri: Uri? = data?.data
+                    val imageUri: Uri? = data?.getStringExtra("selectedImageUri")?.let { Uri.parse(it) }
+                    Log.d("FormUtils", "Selected image URI: $imageUri")
                     imageUri?.let {
                         val inputStream = activity.contentResolver.openInputStream(it)
                         val imageBitmap = BitmapFactory.decodeStream(inputStream)
-                        imageView?.setImageBitmap(imageBitmap)
-                        val base64Image = bitmapToBase64(imageBitmap)
-                        saveBase64ToPreferences(activity, base64Image)
-                        imageCallback?.invoke(base64Image)
-                    } ?: run {
-                        Log.e("FormUtils", "Failed to select image")
-                    }
+                        if (imageBitmap != null) {
+                            Log.d("FormUtils", "Loaded image bitmap from URI")
+                            imageView?.setImageBitmap(imageBitmap)
+                            val base64Image = bitmapToBase64(imageBitmap)
+                            saveBase64ToPreferences(activity, base64Image)
+                            imageCallback?.invoke(base64Image)
+                        } else {
+                            Log.e("FormUtils", "Failed to decode bitmap from URI")
+                        }
+                    } ?: Log.e("FormUtils", "No URI received from gallery")
                 }
             }
         } else {
-            Log.e("FormUtils", "Image result not OK, resultCode: $resultCode")
+            Log.e("FormUtils", "Result code was not OK: $resultCode")
         }
     }
 
     private fun bitmapToBase64(bitmap: Bitmap): String {
-        Log.d("FormUtils", "Converting bitmap to base64")
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
         val byteArray = byteArrayOutputStream.toByteArray()
@@ -161,9 +148,7 @@ object FormUtils {
     }
 
     private fun saveBase64ToPreferences(context: Context, base64Image: String) {
-        Log.d("FormUtils", "Saving base64 image to preferences")
         val sharedPreferences = context.getSharedPreferences("base64_prefs", Context.MODE_PRIVATE)
         sharedPreferences.edit().putString("base64_image", base64Image).apply()
-        Log.d("FormUtils", "Base64 image saved to preferences")
     }
 }

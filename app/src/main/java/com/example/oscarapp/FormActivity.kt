@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.net.Network
@@ -444,20 +443,6 @@ class FormActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         FormUtils.handleImageResult(this, requestCode, resultCode, data)
-    }
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == FormUtils.PERMISSION_REQUEST_CODE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                // Permiso concedido, repetir la acción que requiere permisos
-                when (FormUtils.currentPermissionRequest) {
-                    FormUtils.REQUEST_IMAGE_CAPTURE -> FormUtils.takePhoto(this)
-                    FormUtils.REQUEST_IMAGE_SELECT -> FormUtils.selectPhoto(this)
-                }
-            } else {
-                // Permiso denegado, mostrar mensaje o manejar el caso
-            }
-        }
     }
 }
 
