@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.moshi.kotlin.v1130)
     implementation(libs.logging.interceptor)
     implementation(libs.material.v140)
+    implementation (libs.glide)
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.room.ktx)
 

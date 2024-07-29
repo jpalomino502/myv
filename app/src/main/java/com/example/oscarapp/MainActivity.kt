@@ -35,7 +35,6 @@ import com.example.oscarapp.models.TicketResponse
 import com.example.oscarapp.network.ApiService
 import com.example.oscarapp.network.RetrofitClient
 import com.example.oscarapp.utils.DateJsonAdapter
-import com.example.oscarapp.utils.ServiceUtils
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.squareup.moshi.Moshi
@@ -140,6 +139,10 @@ class MainActivity : AppCompatActivity() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
 
         if (permissionsToRequest.isNotEmpty()) {
