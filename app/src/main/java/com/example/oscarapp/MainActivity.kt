@@ -1,8 +1,10 @@
 package com.example.oscarapp
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
@@ -31,6 +33,7 @@ import com.example.oscarapp.models.Ticket
 import com.example.oscarapp.models.TicketResponse
 import com.example.oscarapp.network.ApiService
 import com.example.oscarapp.network.RetrofitClient
+import com.example.oscarapp.utils.ServiceUtils
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import retrofit2.Call
@@ -38,7 +41,6 @@ import retrofit2.Callback
 import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
-
 
     companion object {
         private const val CAMERA_PERMISSION_REQUEST_CODE = 100
@@ -54,8 +56,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var searchBar: EditText
     private var call: Call<TicketResponse>? = null
 
-
     private lateinit var requestWritePermissionLauncher: ActivityResultLauncher<IntentSenderRequest>
+    private val networkReceiver = NetworkReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,9 +105,20 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Permiso de escritura denegado", Toast.LENGTH_SHORT).show()
             }
         }
+
+        // Enviar datos pendientes al crear la actividad
+        sendPendingServiceRequests()
+
+        // Registrar el receptor de red
+        registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
     }
 
-    // Método para solicitar permisos necesarios
+    override fun onDestroy() {
+        super.onDestroy()
+        // Desregistrar el receptor de red
+        unregisterReceiver(networkReceiver)
+    }
+
     private fun requestNecessaryPermissions() {
         val permissionsToRequest = mutableListOf<String>()
 
@@ -117,7 +130,6 @@ class MainActivity : AppCompatActivity() {
             permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
         }
 
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
@@ -125,10 +137,8 @@ class MainActivity : AppCompatActivity() {
         if (permissionsToRequest.isNotEmpty()) {
             ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), STORAGE_PERMISSION_REQUEST_CODE)
         }
-
     }
 
-    // Manejar el resultado de la solicitud de permisos
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
@@ -143,11 +153,7 @@ class MainActivity : AppCompatActivity() {
                 val readPermissionGranted = permissions.indexOf(Manifest.permission.READ_EXTERNAL_STORAGE) >= 0 &&
                         grantResults[permissions.indexOf(Manifest.permission.READ_EXTERNAL_STORAGE)] == PackageManager.PERMISSION_GRANTED
                 if (readPermissionGranted) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        requestWritePermission()
-                    } else {
-                        Toast.makeText(this, "Permiso de almacenamiento concedido", Toast.LENGTH_SHORT).show()
-                    }
+                    requestWritePermission()
                 } else {
                     Toast.makeText(this, "Permiso de almacenamiento denegado", Toast.LENGTH_SHORT).show()
                 }
@@ -177,8 +183,12 @@ class MainActivity : AppCompatActivity() {
             val intentSenderRequest = IntentSenderRequest.Builder(writeRequest).build()
             requestWritePermissionLauncher.launch(intentSenderRequest)
         } else {
-            // En versiones anteriores a Android 11 (API 30), no se necesita la solicitud especial
-            Toast.makeText(this, "Permiso de almacenamiento concedido", Toast.LENGTH_SHORT).show()
+            // En versiones anteriores a Android 11 (API 30), solicitar el permiso directamente
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                STORAGE_PERMISSION_REQUEST_CODE
+            )
         }
     }
 
@@ -186,10 +196,6 @@ class MainActivity : AppCompatActivity() {
         // Aquí puedes inicializar la funcionalidad de la cámara
         Toast.makeText(this, "Cámara abierta", Toast.LENGTH_SHORT).show()
     }
-
-
-
-
 
     override fun onPause() {
         super.onPause()
@@ -202,9 +208,9 @@ class MainActivity : AppCompatActivity() {
         call?.cancel()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d("MainActivity", "onDestroy called")
+    override fun onResume() {
+        super.onResume()
+        sendPendingServiceRequests()
     }
 
     private fun fetchTickets() {
@@ -296,5 +302,19 @@ class MainActivity : AppCompatActivity() {
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
         finish()
+    }
+
+    private fun sendPendingServiceRequests() {
+        if (isNetworkConnected()) {
+            ServiceUtils.sendPendingServiceRequests(this)
+        }
+    }
+
+    private inner class NetworkReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (isNetworkConnected()) {
+                ServiceUtils.sendPendingServiceRequests(this@MainActivity)
+            }
+        }
     }
 }
