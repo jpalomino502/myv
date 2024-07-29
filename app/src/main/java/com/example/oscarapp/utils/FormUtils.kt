@@ -4,20 +4,25 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Base64
+import android.util.Log
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.oscarapp.models.Ticket
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import java.io.InputStream
 
 object FormUtils {
+    private const val TAG = "FormUtils"
     private const val REQUEST_IMAGE_CAPTURE = 1
     private const val REQUEST_IMAGE_SELECT = 2
     private var imageView: ImageView? = null
@@ -34,9 +39,9 @@ object FormUtils {
         fechaEditText: EditText,
         tipoDeServiciosEditText: EditText,
         productoEditText: EditText,
-        nombre_tecnico: EditText,
-        autorizacion_clienteEditText: EditText,
-        recibi_clienteEditText: EditText,
+        nombreTecnico: EditText,
+        autorizacionClienteEditText: EditText,
+        recibiClienteEditText: EditText,
         ticket: Ticket
     ) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -50,12 +55,12 @@ object FormUtils {
         celularEditText.setText(ticket.cliente?.telefono)
         tipoDeServiciosEditText.setText(ticket.titulo)
         productoEditText.setText(ticket.producto)
-        autorizacion_clienteEditText.setText(ticket.cliente.nombre)
-        recibi_clienteEditText.setText(ticket.cliente.nombre)
+        autorizacionClienteEditText.setText(ticket.cliente?.nombre)
+        recibiClienteEditText.setText(ticket.cliente?.nombre)
 
         val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val userName = sharedPreferences.getString("userName", "")
-        nombre_tecnico.setText(userName)
+        nombreTecnico.setText(userName)
     }
 
     fun showPhotoDialog(context: Context, imageView: ImageView?, callback: (String) -> Unit) {
@@ -75,16 +80,30 @@ object FormUtils {
     }
 
     private fun takePhoto(context: Context) {
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        if (intent.resolveActivity(context.packageManager) != null) {
-            (context as? Activity)?.startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(context as Activity, arrayOf(android.Manifest.permission.CAMERA), REQUEST_IMAGE_CAPTURE)
+        } else {
+            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            if (takePictureIntent.resolveActivity(context.packageManager) != null) {
+                (context as? Activity)?.startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+            } else {
+                Log.e(TAG, "No activity found to handle camera intent.")
+                Toast.makeText(context, "No se encontró una aplicación de cámara.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     private fun selectPhoto(context: Context) {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        if (intent.resolveActivity(context.packageManager) != null) {
-            (context as? Activity)?.startActivityForResult(intent, REQUEST_IMAGE_SELECT)
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(context as Activity, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), REQUEST_IMAGE_SELECT)
+        } else {
+            val pickPhotoIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            if (pickPhotoIntent.resolveActivity(context.packageManager) != null) {
+                (context as? Activity)?.startActivityForResult(pickPhotoIntent, REQUEST_IMAGE_SELECT)
+            } else {
+                Log.e(TAG, "No activity found to handle gallery intent.")
+                Toast.makeText(context, "No se encontró una aplicación de galería.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -95,24 +114,35 @@ object FormUtils {
                     val extras = data?.extras
                     val imageBitmap = extras?.get("data") as? Bitmap
                     imageBitmap?.let {
+                        Log.d(TAG, "Image captured successfully.")
                         imageView?.setImageBitmap(it)
                         val base64Image = bitmapToBase64(it)
                         saveBase64ToPreferences(activity, base64Image)
                         imageCallback?.invoke(base64Image)
+                    } ?: run {
+                        Log.e(TAG, "Failed to capture image.")
                     }
                 }
                 REQUEST_IMAGE_SELECT -> {
                     val imageUri: Uri? = data?.data
                     imageUri?.let {
+                        Log.d(TAG, "Image selected successfully.")
                         val inputStream = activity.contentResolver.openInputStream(it)
                         val imageBitmap = BitmapFactory.decodeStream(inputStream)
                         imageView?.setImageBitmap(imageBitmap)
                         val base64Image = bitmapToBase64(imageBitmap)
                         saveBase64ToPreferences(activity, base64Image)
                         imageCallback?.invoke(base64Image)
+                    } ?: run {
+                        Log.e(TAG, "Failed to select image.")
                     }
                 }
+                else -> {
+                    Log.e(TAG, "Unhandled request code: $requestCode")
+                }
             }
+        } else {
+            Log.e(TAG, "Result not OK. Request code: $requestCode, Result code: $resultCode")
         }
     }
 
@@ -120,8 +150,7 @@ object FormUtils {
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
         val byteArray = byteArrayOutputStream.toByteArray()
-        val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
-        return "data:image/svg+xml;base64,$base64String"
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP)
     }
 
     private fun saveBase64ToPreferences(context: Context, base64Image: String) {
