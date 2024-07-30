@@ -46,7 +46,7 @@ object FormUtils {
 
         serviceControlEditText.setText(ticket.numTicket)
         razonSocialEditText.setText(ticket.cliente?.razonSocial)
-        direccionEditText.setText(ticket.cliente?.direccion)
+        direccionEditText.setText(ticket.ubicacionActividad)
         nitEditText.setText(ticket.cliente?.nitCc)
         telefonoEditText.setText(ticket.cliente?.telefono)
         celularEditText.setText(ticket.cliente?.telefono)

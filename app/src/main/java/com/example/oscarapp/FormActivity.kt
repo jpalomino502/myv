@@ -99,8 +99,6 @@ class FormActivity : AppCompatActivity() {
         celularEditText = findViewById(R.id.celular)
         productoEditText = findViewById(R.id.producto)
         recibi_clienteEditText = findViewById(R.id.recibi_cliente)
-
-
         autorizacion_clienteEditText = findViewById(R.id.autorizacion_cliente)
 
         btnClear.setOnClickListener {
