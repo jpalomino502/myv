@@ -101,6 +101,9 @@ class FormActivity : AppCompatActivity() {
         recibi_clienteEditText = findViewById(R.id.recibi_cliente)
         autorizacion_clienteEditText = findViewById(R.id.autorizacion_cliente)
 
+        val serviceRadioGroup = findViewById<RadioGroup>(R.id.service_radio_group)
+
+
         btnClear.setOnClickListener {
             signatureView.clear()
         }
@@ -145,6 +148,7 @@ class FormActivity : AppCompatActivity() {
                 nombre_tecnico,
                 autorizacion_clienteEditText,
                 recibi_clienteEditText,
+                serviceRadioGroup,
                 it
             )
         }

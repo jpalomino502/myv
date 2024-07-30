@@ -167,6 +167,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Permiso de notificaciones denegado", Toast.LENGTH_SHORT).show()
                 }
             }
+
         }
     }
 

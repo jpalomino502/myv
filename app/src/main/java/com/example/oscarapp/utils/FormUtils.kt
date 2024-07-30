@@ -12,8 +12,10 @@ import android.util.Base64
 import android.util.Log
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.RadioGroup
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.oscarapp.R
 import com.example.oscarapp.models.Ticket
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
@@ -39,6 +41,7 @@ object FormUtils {
         nombreTecnico: EditText,
         autorizacionClienteEditText: EditText,
         recibiClienteEditText: EditText,
+        serviceRadioGroup: RadioGroup,
         ticket: Ticket
     ) {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -54,10 +57,18 @@ object FormUtils {
         productoEditText.setText(ticket.producto)
         autorizacionClienteEditText.setText(ticket.cliente?.nombre)
         recibiClienteEditText.setText(ticket.cliente?.nombre)
+        //tipo_servicioEditText.setText(ticket.tipo_servicio)
 
         val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val userName = sharedPreferences.getString("userName", "")
         nombreTecnico.setText(userName)
+
+        // Configurar RadioGroup según el valor de tipo_servicio
+        when (ticket.tipo_servicio) {
+            "servicio" -> serviceRadioGroup.check(R.id.service)
+            "refuerzo" -> serviceRadioGroup.check(R.id.reinforcement)
+        }
+
     }
 
     fun showPhotoDialog(activity: Activity, imageView: ImageView?, callback: (String) -> Unit) {
