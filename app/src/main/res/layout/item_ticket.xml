@@ -21,6 +21,16 @@
             android:textStyle="bold"
             style="@style/TextStyleTitle" />
 
+
+        <TextView
+            android:id="@+id/nombre_cliente"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cliente"
+            android:textStyle="bold"
+            style="@style/TextStyleTitle" />
+
+
         <!-- Title of the ticket -->
         <TextView
             android:id="@+id/ticket_title"

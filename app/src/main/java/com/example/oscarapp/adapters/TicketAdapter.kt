@@ -57,12 +57,14 @@ class TicketAdapter(
     class TicketViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val ticketTitle: TextView = itemView.findViewById(R.id.ticket_title)
         private val ticketNumber: TextView = itemView.findViewById(R.id.ticket_number)
+        private val nombreCliente: TextView = itemView.findViewById(R.id.nombre_cliente)
         private val ticketObservations: TextView = itemView.findViewById(R.id.ticket_observations)
         private val ticketLocation: TextView = itemView.findViewById(R.id.ticket_location)
 
         fun bind(ticket: Ticket, onItemClick: (Ticket) -> Unit) {
             ticketTitle.text = ticket.titulo
             ticketNumber.text = "#orden ${ticket.numTicket}"
+            nombreCliente.text = ticket.cliente.nombre
             ticketObservations.text = ticket.observaciones
             ticketLocation.text = ticket.ubicacionActividad
             itemView.setOnClickListener { onItemClick(ticket) }
