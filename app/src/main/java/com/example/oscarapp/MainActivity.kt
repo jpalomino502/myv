@@ -12,6 +12,8 @@ import android.net.NetworkCapabilities
 import android.net.NetworkInfo
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
@@ -62,6 +64,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var logoutButton: Button
     private lateinit var searchBar: EditText
     private var call: Call<TicketResponse>? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private val updateInterval: Long = 5000
 
     private lateinit var requestWritePermissionLauncher: ActivityResultLauncher<IntentSenderRequest>
     private val networkReceiver = NetworkReceiver()
@@ -96,15 +100,12 @@ class MainActivity : AppCompatActivity() {
         fetchTickets()
         checkNetworkStatus()
 
-        // Solicitar permisos necesarios
         requestNecessaryPermissions()
 
-        // Start DataSyncService from here
         val intent = Intent(this, DataSyncService::class.java)
         startService(intent)
         Log.d("MainActivity", "DataSyncService started from MainActivity")
 
-        // Inicializar el lanzador de solicitud de permiso de escritura
         requestWritePermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 Toast.makeText(this, "Permiso de escritura concedido", Toast.LENGTH_SHORT).show()
@@ -113,17 +114,31 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Enviar datos pendientes al crear la actividad
         sendPendingServiceRequests()
 
-        // Registrar el receptor de red
         registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+
+        // Iniciar la actualización periódica de tickets
+        startPeriodicUpdates()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Desregistrar el receptor de red
         unregisterReceiver(networkReceiver)
+        stopPeriodicUpdates()
+    }
+
+    private fun startPeriodicUpdates() {
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                fetchTickets()
+                handler.postDelayed(this, updateInterval)
+            }
+        }, updateInterval)
+    }
+
+    private fun stopPeriodicUpdates() {
+        handler.removeCallbacksAndMessages(null)
     }
 
     private fun requestNecessaryPermissions() {
@@ -167,7 +182,6 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Permiso de notificaciones denegado", Toast.LENGTH_SHORT).show()
                 }
             }
-
         }
     }
 
@@ -186,18 +200,12 @@ class MainActivity : AppCompatActivity() {
             val intentSenderRequest = IntentSenderRequest.Builder(writeRequest).build()
             requestWritePermissionLauncher.launch(intentSenderRequest)
         } else {
-            // En versiones anteriores a Android 11 (API 30), solicitar el permiso directamente
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 STORAGE_PERMISSION_REQUEST_CODE
             )
         }
-    }
-
-    private fun openCamera() {
-        // Aquí puedes inicializar la funcionalidad de la cámara
-        Toast.makeText(this, "Cámara abierta", Toast.LENGTH_SHORT).show()
     }
 
     override fun onPause() {
@@ -221,7 +229,8 @@ class MainActivity : AppCompatActivity() {
         val userId = sharedPreferences.getString("userId", "") ?: ""
 
         if (savedTickets.isNotEmpty()) {
-            adapter = TicketAdapter(savedTickets) { ticket ->
+            val filteredTickets = savedTickets.filter { it.estado != "cerrado" }
+            adapter = TicketAdapter(filteredTickets) { ticket ->
                 openFormActivity(ticket)
             }
             recyclerView.adapter = adapter
@@ -236,7 +245,7 @@ class MainActivity : AppCompatActivity() {
                     val ticketResponse = response.body()
                     ticketResponse?.let {
                         runOnUiThread {
-                            val tickets = it.tickets
+                            val tickets = it.tickets.filter { ticket -> ticket.estado != "cerrado" }
                             adapter = TicketAdapter(tickets) { ticket ->
                                 openFormActivity(ticket)
                             }
@@ -366,7 +375,7 @@ class MainActivity : AppCompatActivity() {
 
     private inner class NetworkReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            checkNetworkStatus() // Actualiza el estado de la red al recibir una notificación
+            checkNetworkStatus()
         }
     }
 }

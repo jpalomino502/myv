@@ -207,7 +207,7 @@ object JsonData {
             {"name": "Trampa Tubo PVC", "value": "trampa-tubo-pvc", "checked": false},
             {"name": "Trampa Cajas C.", "value": "trampa-cajas-cebadero", "checked": false},
             {"name": "Trampas de I.C", "value": "trampas-de-impacto-cocodrilo", "checked": false},
-            {"name": "Trampa Adherente Bandeja 48 RNHP Bandeja 2", "value": "trampa-adherente-bandeja-48-rnhp-bandeja-2", "checked": false},
+            {"name": "Trampa Adherente B 48 R", "value": "trampa-adherente-bandeja-48-rnhp-bandeja", "checked": false},
             {"name": "Trampa Adherente Gato de Papel Neopreno", "value": "trampa-adherente-gato-de-papel-neopreno", "checked": false},
             {"name": "Jaulas para roedores", "value": "jaulas-para-roedores", "checked": false},
             {"name": "Ultrasonidos", "value": "ultrasonidos", "checked": false},

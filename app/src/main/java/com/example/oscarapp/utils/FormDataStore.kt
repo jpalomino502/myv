@@ -46,7 +46,7 @@ object FormDataStorage {
             val itemView = container.getChildAt(i) as? LinearLayout ?: continue
             val checkBox = itemView.getChildAt(0) as? CheckBox ?: continue
             val itemJson = JsonObject().apply {
-                put("name", "")
+                put("name", checkBox.text.toString())
                 put("checked", checkBox.isChecked)
                 put("value", checkBox.text.toString())
             }
@@ -69,10 +69,8 @@ object FormDataStorage {
                 put("grados", grados)
                 put("metodos", metodos)
 
-                // Cambiar 'plagas' por 'servicios' si el nombre del servicio es "12"
-                if (servicioName.contains("12")) {
-                    put("servicios", plagas)
-                } else if (servicioName.contains("13")) {
+                // Cambiar 'plagas' por 'servicios' si el nombre del servicio es "12" o "13"
+                if (servicioName.contains("12") || servicioName.contains("13")) {
                     put("servicios", plagas)
                 } else {
                     put("plagas", plagas)

@@ -7,5 +7,7 @@
     <color name="blue_dark">#003366</color>
     <color name="backgroundColor">#f0f7fa</color>
     <color name="cardBackground">#FFFFFF</color>
+    <color name="light_green">#ccffcc</color>
+    <color name="light_orange">#ffcc99</color>
     <color name="textColor">#333333</color>
 </resources>
