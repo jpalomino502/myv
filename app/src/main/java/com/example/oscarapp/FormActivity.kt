@@ -16,6 +16,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -136,10 +137,13 @@ class FormActivity : AppCompatActivity() {
                 autorizacion_clienteEditText,
                 recibi_clienteEditText,
                 serviceRadioGroup,
-                it
+                it,
+                fechaProximoEditText,
+                fechaRealizarEditText
             )
 
-            // Rellenar la encuesta
+
+        // Rellenar la encuesta
             FormDataPopulator.populateEncuesta(this, encuestaContainer)
 
             // Rellenar los equipos de protección
@@ -236,7 +240,7 @@ class FormActivity : AppCompatActivity() {
             null
         }
 
-        val encuestaJsonString = FormDataStorage.obtenerEncuestaSeleccionada(encuestaContainer)
+        val encuestaJsonString = FormDataStorage.obtenerEncuestaSeleccionada(findViewById(R.id.encuesta_container))
 
         val titulo = tipoDeServiciosEditText.text.toString()
 
@@ -246,14 +250,13 @@ class FormActivity : AppCompatActivity() {
         val firmaBitmap = signatureView.getSignatureBitmap()
         val firmaBase64 = firmaBitmap?.let { encodeToBase64(it) } ?: ""
 
-        // Obtener foto_novedad desde SharedPreferences
         val fotoNovedadBase64 = sharedPreferences.getString("foto_novedad", "")
 
-        // Condición para verificar si base64Image está presente
         val imageBase64 = if (base64Image.isNullOrEmpty()) "" else base64Image
 
-        // Condición para verificar si foto_novedad está presente
         val fotoNovedad = if (fotoNovedadBase64.isNullOrEmpty()) "" else fotoNovedadBase64
+
+        val serviciosJson = FormDataPopulator.modifiedServiciosArray?.toString() ?: ""
 
         val serviceRequest = ServiceRequest(
             ticketId = ticket.id,
@@ -285,6 +288,7 @@ class FormActivity : AppCompatActivity() {
             ulr_ratones = imageBase64,
             firma = firmaBase64,
             observaciones3 = "",
+            serviciosjson = serviciosJson,
             informeserviciojson = encuestaJsonString,
             titulo = titulo,
             foto_novedad = fotoNovedad
@@ -292,6 +296,7 @@ class FormActivity : AppCompatActivity() {
 
         sendDataToServer(serviceRequest)
     }
+
 
 
     private fun encodeToBase64(bitmap: Bitmap): String {

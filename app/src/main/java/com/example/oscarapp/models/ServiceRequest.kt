@@ -35,5 +35,6 @@ data class ServiceRequest(
     @SerializedName("firma") val firma: String,
     @SerializedName("observaciones3") val observaciones3: String,
     @SerializedName("informeserviciojson") val informeserviciojson: String,
+    @SerializedName("serviciosjson") val serviciosjson: String,
     @SerializedName("foto_novedad") val foto_novedad: String
 )

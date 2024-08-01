@@ -95,6 +95,7 @@ class LoginActivity : AppCompatActivity() {
         })
     }
 
+
     private fun isNetworkConnected(): Boolean {
         val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)

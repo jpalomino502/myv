@@ -1,6 +1,5 @@
 package com.example.oscarapp.utils
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
@@ -13,8 +12,6 @@ import android.util.Log
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.RadioGroup
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.example.oscarapp.R
 import com.example.oscarapp.models.Ticket
 import java.io.ByteArrayOutputStream
@@ -40,15 +37,27 @@ object FormUtils {
         fechaEditText: EditText,
         tipoDeServiciosEditText: EditText,
         productoEditText: EditText,
-        nombreTecnico: EditText,
+        nombre_tecnico: EditText,
         autorizacionClienteEditText: EditText,
         recibiClienteEditText: EditText,
         serviceRadioGroup: RadioGroup,
-        ticket: Ticket
+        ticket: Ticket,
+        fechaproximoEditText: EditText,
+        fecharealizarEditText: EditText
     ) {
-        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        fechaEditText.setText(currentDate)
+        // Formatos de fecha
+        val dateOnlyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dateTimeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
+        // Establece la fecha actual en el campo de fecha (solo fecha)
+        val currentDate = dateOnlyFormat.format(Date())
+        fechaEditText.setText(currentDate)
+        // Configura los campos como no editables
+        fechaEditText.isFocusable = false
+        fechaEditText.isFocusableInTouchMode = false
+        fechaEditText.isEnabled = false
+
+        // Establece los valores para los otros campos
         serviceControlEditText.setText(ticket.numTicket)
         razonSocialEditText.setText(ticket.cliente?.razonSocial)
         direccionEditText.setText(ticket.ubicacionActividad)
@@ -57,18 +66,46 @@ object FormUtils {
         celularEditText.setText(ticket.cliente?.celular)
         tipoDeServiciosEditText.setText(ticket.titulo)
         productoEditText.setText(ticket.producto)
+
+        // Usa el nombre del usuario en el campo nombreTecnico
+        nombre_tecnico.setText(ticket.userResponse?.user?.name ?: "")
+
         autorizacionClienteEditText.setText(ticket.cliente?.nombre)
         recibiClienteEditText.setText(ticket.cliente?.nombre)
 
-        val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-        val userName = sharedPreferences.getString("userName", "")
-        nombreTecnico.setText(userName)
+        // Configura campos como no editables
+        listOf(
+            serviceControlEditText,
+            razonSocialEditText,
+            direccionEditText,
+            nitEditText,
+            telefonoEditText,
+            celularEditText,
+            tipoDeServiciosEditText,
+            serviceRadioGroup
+        ).forEach {
+            it.isFocusable = false
+            it.isFocusableInTouchMode = false
+            it.isEnabled = false
+        }
 
-        when (ticket.tipoServicio) {  // Cambiado a tipoServicio
+        // Establece el valor para el campo de fecha realizar (fecha y hora)
+        val fechaRealizar = ticket.diligencias.firstOrNull()?.fechaRealizar
+        fecharealizarEditText.setText(fechaRealizar?.let { dateTimeFormat.format(it) } ?: "Fecha no disponible")
+
+        // Establece el valor para el campo de fecha próximo (fecha y hora)
+        val fechaProximo = ticket.diligencias.firstOrNull()?.fechaProximo
+        fechaproximoEditText.setText(fechaProximo?.let { dateTimeFormat.format(it) } ?: "Fecha no disponible")
+
+        // Configura el RadioGroup basado en el tipo de servicio
+        val tipoServicio = ticket.diligencias.firstOrNull()?.tipoServicio
+        when (tipoServicio) {
             "servicio" -> serviceRadioGroup.check(R.id.service)
             "refuerzo" -> serviceRadioGroup.check(R.id.reinforcement)
+            else -> serviceRadioGroup.clearCheck()
         }
     }
+
 
     fun showPhotoDialog(activity: Activity, imageView: ImageView?, callback: (String) -> Unit) {
         this.serviceImageView = imageView

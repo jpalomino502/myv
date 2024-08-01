@@ -269,7 +269,7 @@ class MainActivity : AppCompatActivity() {
         val gson = Gson()
         val json = gson.toJson(tickets)
         // Log para mostrar el JSON antes de guardarlo
-        Log.d("SaveTickets", "Saving tickets JSON: $json")
+        //Log.d("SaveTickets", "Saving tickets JSON: $json")
         editor.putString("savedTickets", json)
         editor.apply()
     }
@@ -278,7 +278,7 @@ class MainActivity : AppCompatActivity() {
         val gson = Gson()
         val json = sharedPreferences.getString("savedTickets", null)
         // Log para mostrar el JSON recuperado
-        Log.d("GetSavedTickets", "Retrieved tickets JSON: $json")
+        //Log.d("GetSavedTickets", "Retrieved tickets JSON: $json")
         val type = object : TypeToken<List<Ticket>>() {}.type
         return if (json != null) {
             gson.fromJson(json, type)

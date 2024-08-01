@@ -13,16 +13,18 @@ import org.json.JSONException
 
 object FormDataPopulator {
 
-    fun populateServicios(activity: Activity, serviciosContainer: LinearLayout, serviciosJson: String) {
+    var modifiedServiciosArray: JSONArray? = null
+
+    fun populateServicios(activity: Activity, serviciosContainer: LinearLayout, serviciosJson: String): String {
         try {
             val serviciosArray = JSONArray(serviciosJson)
+            modifiedServiciosArray = JSONArray()
             serviciosContainer.removeAllViews()
 
             for (i in 0 until serviciosArray.length()) {
                 val servicioObj = serviciosArray.getJSONObject(i)
                 val servicioName = servicioObj.optString("servicio", "Servicio Sin Nombre")
 
-                // Añadir el nombre del servicio como un título
                 val servicioTitle = TextView(activity).apply {
                     text = servicioName
                     textSize = 20f
@@ -31,11 +33,9 @@ object FormDataPopulator {
                 }
                 serviciosContainer.addView(servicioTitle)
 
-                // Añadir los elementos de la sección
                 val itemsArray = servicioObj.optJSONArray("plagas") ?: JSONArray()
-                addSectionItems(activity, serviciosContainer, itemsArray, "Plagas", servicioName)
+                addSectionItems(activity, serviciosContainer, itemsArray, "Plagas", servicioName, modifiedServiciosArray!!)
 
-                // Añadir métodos
                 val metodosArray = servicioObj.optJSONArray("metodos") ?: JSONArray()
                 if (metodosArray.length() > 0) {
                     val metodosLayout = LinearLayout(activity).apply {
@@ -58,21 +58,24 @@ object FormDataPopulator {
                         val checkBox = CheckBox(activity).apply {
                             text = metodoName
                             isChecked = metodoChecked
-                            isEnabled = false
                             setTextColor(Color.BLACK)
                             buttonTintList = ColorStateList.valueOf(Color.BLACK)
                             setPadding(16, 16, 16, 16)
+                            setOnCheckedChangeListener { _, isChecked ->
+                                Log.d("FormDataPopulator", "Método $metodoName changed to: $isChecked")
+                                metodoObj.put("checked", isChecked)
+                                printNewJson(modifiedServiciosArray!!)
+                            }
                         }
                         metodosLayout.addView(checkBox)
                     }
                     serviciosContainer.addView(metodosLayout)
                 }
 
-                // Añadir grados
                 val gradosArray = servicioObj.optJSONArray("grados") ?: JSONArray()
                 if (gradosArray.length() > 0) {
                     val gradosLayout = LinearLayout(activity).apply {
-                        orientation = LinearLayout.HORIZONTAL
+                        orientation = LinearLayout.VERTICAL
                         setPadding(0, 0, 0, 16)
                     }
                     val gradosTitle = TextView(activity).apply {
@@ -83,6 +86,26 @@ object FormDataPopulator {
                     }
                     gradosLayout.addView(gradosTitle)
 
+                    val radioGroup = RadioGroup(activity).apply {
+                        orientation = RadioGroup.HORIZONTAL
+                        setOnCheckedChangeListener { group, checkedId ->
+                            for (j in 0 until gradosArray.length()) {
+                                val gradoObj = gradosArray.getJSONObject(j)
+                                val radioButton = group.findViewById<RadioButton>(checkedId)
+                                if (radioButton != null) {
+                                    val gradoName = radioButton.text.toString()
+                                    val isChecked = radioButton.isChecked
+                                    if (gradoObj.optString("name") == gradoName) {
+                                        gradoObj.put("checked", isChecked)
+                                    } else {
+                                        gradoObj.put("checked", false)
+                                    }
+                                }
+                            }
+                            printNewJson(modifiedServiciosArray!!)
+                        }
+                    }
+
                     for (j in 0 until gradosArray.length()) {
                         val gradoObj = gradosArray.getJSONObject(j)
                         val gradoName = gradoObj.optString("name", "Grado Sin Nombre")
@@ -91,18 +114,22 @@ object FormDataPopulator {
                         val radioButton = RadioButton(activity).apply {
                             text = gradoName
                             isChecked = gradoChecked
-                            isEnabled = false
                             setTextColor(Color.BLACK)
                             buttonTintList = ColorStateList.valueOf(Color.BLACK)
                         }
-                        gradosLayout.addView(radioButton)
+                        radioGroup.addView(radioButton)
                     }
+                    gradosLayout.addView(radioGroup)
                     serviciosContainer.addView(gradosLayout)
                 }
+                modifiedServiciosArray!!.put(servicioObj)
             }
         } catch (e: JSONException) {
             e.printStackTrace()
+            return serviciosJson
         }
+        printNewJson(modifiedServiciosArray!!)
+        return modifiedServiciosArray.toString()
     }
 
     private fun addSectionItems(
@@ -110,7 +137,8 @@ object FormDataPopulator {
         layout: LinearLayout,
         items: JSONArray,
         sectionName: String,
-        servicioName: String
+        servicioName: String,
+        modifiedServiciosArray: JSONArray
     ) {
         val sectionLayout = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
@@ -145,7 +173,6 @@ object FormDataPopulator {
                 }
                 itemLayout.addView(cantidadEditText)
 
-                // Añadir ImageView para mostrar la foto
                 val imageView = ImageView(activity).apply {
                     layoutParams = LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
@@ -161,7 +188,6 @@ object FormDataPopulator {
                         text = "Seleccionar Foto"
                         setOnClickListener {
                             FormUtils.showPhotoDialog(activity, imageView) { base64Image ->
-                                // Aquí puedes manejar la imagen capturada si es necesario
                             }
                         }
                         setPadding(16, 16, 16, 16)
@@ -176,14 +202,27 @@ object FormDataPopulator {
                     isChecked = itemChecked
                     setTextColor(Color.BLACK)
                     buttonTintList = ColorStateList.valueOf(Color.BLACK)
+                    setOnCheckedChangeListener { _, isChecked ->
+                        Log.d("FormDataPopulator", "Checkbox $itemName changed to: $isChecked")
+                        try {
+                            item.put("checked", isChecked)
+                            printNewJson(modifiedServiciosArray)
+                        } catch (e: JSONException) {
+                            e.printStackTrace()
+                        }
+                    }
                 }
                 itemLayout.addView(checkBox)
             }
+
             sectionLayout.addView(itemLayout)
         }
         layout.addView(sectionLayout)
     }
 
+    private fun printNewJson(modifiedServiciosArray: JSONArray) {
+        Log.d("FormDataPopulator", "Modified JSON: ${modifiedServiciosArray.toString()}")
+    }
 
     fun populateEquipos(activity: Activity, equiposContainer: LinearLayout, equiposJson: String) {
         try {
