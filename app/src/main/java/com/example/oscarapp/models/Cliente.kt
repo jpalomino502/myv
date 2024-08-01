@@ -11,6 +11,7 @@ data class Cliente(
     @SerializedName("nombre") val nombre: String,
     @SerializedName("direccion") val direccion: String,
     @SerializedName("telefono") val telefono: String,
+    @SerializedName("celular") val celular: String,
     @SerializedName("contacto") val contacto: String,
     @SerializedName("estado") val estado: String,
     @SerializedName("created_at") val createdAt: String,
@@ -23,6 +24,7 @@ data class Cliente(
         nombre = parcel.readString() ?: "",
         direccion = parcel.readString() ?: "",
         telefono = parcel.readString() ?: "",
+        celular = parcel.readString() ?: "",
         contacto = parcel.readString() ?: "",
         estado = parcel.readString() ?: "",
         createdAt = parcel.readString() ?: "",
@@ -36,6 +38,7 @@ data class Cliente(
         parcel.writeString(nombre)
         parcel.writeString(direccion)
         parcel.writeString(telefono)
+        parcel.writeString(celular)
         parcel.writeString(contacto)
         parcel.writeString(estado)
         parcel.writeString(createdAt)

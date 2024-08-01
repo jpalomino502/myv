@@ -18,7 +18,8 @@ data class Ticket(
     @SerializedName("updated_at") val updatedAt: String,
     @SerializedName("cliente") val cliente: Cliente,
     @SerializedName("producto") val producto: String,
-    @SerializedName("tipo_servicio") val tipo_servicio: String
+    @SerializedName("tipo_servicio") val tipoServicio: String,
+    @SerializedName("diligencias") val diligencias: List<Diligencia>
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         id = parcel.readString() ?: "",
@@ -33,9 +34,11 @@ data class Ticket(
         createdAt = parcel.readString() ?: "",
         updatedAt = parcel.readString() ?: "",
         cliente = parcel.readParcelable(Cliente::class.java.classLoader) ?: Cliente(parcel),
-        producto = parcel.readString() ?: "", // Read product field from parcel
-        tipo_servicio = parcel.readString() ?: ""
-
+        producto = parcel.readString() ?: "",
+        tipoServicio = parcel.readString() ?: "",
+        diligencias = mutableListOf<Diligencia>().apply {
+            parcel.readList(this, Diligencia::class.java.classLoader)
+        }
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -52,10 +55,8 @@ data class Ticket(
         parcel.writeString(updatedAt)
         parcel.writeParcelable(cliente, flags)
         parcel.writeString(producto)
-        parcel.writeString(tipo_servicio)
-
-
-
+        parcel.writeString(tipoServicio)
+        parcel.writeList(diligencias) // Cambio aquí para la lista de diligencias
     }
 
     override fun describeContents(): Int {

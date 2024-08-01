@@ -1,12 +1,13 @@
 package com.example.oscarapp.utils
 
 import android.app.Activity
-import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.text.InputType
 import android.util.Log
 import android.widget.*
+import androidx.core.view.children
+import com.example.oscarapp.R
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -22,6 +23,11 @@ object FormDataPopulator {
                 val servicio = serviciosArray.getJSONObject(i)
                 Log.d("FormDataPopulator", "Procesando servicio: ${servicio.optString("servicio")}")
                 addServicioSection(activity, container, servicio)
+            }
+
+            // Añadir Button e ImageView a observacionesContainer
+            activity.runOnUiThread {
+                addButtonAndImageView(activity)
             }
         } catch (e: JSONException) {
             e.printStackTrace()
@@ -67,6 +73,11 @@ object FormDataPopulator {
                 encuestaLayout.addView(radioGroup)
                 container.addView(encuestaLayout)
             }
+
+            // Añadir Button e ImageView a observacionesContainer
+            activity.runOnUiThread {
+                addButtonAndImageView(activity)
+            }
         } catch (e: JSONException) {
             e.printStackTrace()
         }
@@ -103,6 +114,11 @@ object FormDataPopulator {
 
                 equipoLayout.addView(checkBox)
                 container.addView(equipoLayout)
+            }
+
+            // Añadir Button e ImageView a observacionesContainer
+            activity.runOnUiThread {
+                addButtonAndImageView(activity)
             }
         } catch (e: JSONException) {
             e.printStackTrace()
@@ -187,6 +203,7 @@ object FormDataPopulator {
                 }
                 itemLayout.addView(cantidadEditText)
 
+                // Mueve el ImageView al layout adecuado
                 val imageView = ImageView(activity).apply {
                     layoutParams = LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
@@ -241,21 +258,57 @@ object FormDataPopulator {
         }
 
         for (i in 0 until gradosArray.length()) {
-            val item = gradosArray.getJSONObject(i)
-            val itemName = item.optString("name", "Sin nombre")
-            val itemChecked = item.optBoolean("checked", false)
+            val grado = gradosArray.getJSONObject(i)
+            val gradoName = grado.optString("name", "Sin nombre")
+            val gradoChecked = grado.optBoolean("checked", false)
 
             val radioButton = RadioButton(activity).apply {
-                text = itemName
-                isChecked = itemChecked
+                text = gradoName
+                isChecked = gradoChecked
                 setTextColor(Color.BLACK)
                 buttonTintList = ColorStateList.valueOf(Color.BLACK)
             }
-
             radioGroup.addView(radioButton)
         }
 
         gradosLayout.addView(radioGroup)
         layout.addView(gradosLayout)
+    }
+    private fun addButtonAndImageView(activity: Activity) {
+        val observacionesContainer = activity.findViewById<LinearLayout>(R.id.observacionesContainer)
+
+        if (observacionesContainer != null) {
+            val hasImageView = observacionesContainer.children.any { it is ImageView }
+            val hasButton = observacionesContainer.children.any { it is Button }
+
+            if (!hasImageView && !hasButton) {
+                val imageView = ImageView(activity).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        400
+                    ).apply {
+                        setMargins(16, 16, 16, 8)
+                    }
+                    setPadding(16, 16, 16, 16)
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                }
+
+                val button = Button(activity).apply {
+                    text = "Seleccionar Foto"
+                    setOnClickListener {
+                        FormUtils.showAdditionalPhotoDialog(activity, imageView) { base64Image ->
+                        }
+                    }
+                    setPadding(16, 16, 16, 16)
+                    setBackgroundColor(Color.BLACK)
+                    setTextColor(Color.WHITE)
+                }
+
+                observacionesContainer.addView(imageView)
+                observacionesContainer.addView(button)
+            }
+        } else {
+            Log.e("FormDataPopulator", "No se encontró el contenedor de observaciones")
+        }
     }
 }

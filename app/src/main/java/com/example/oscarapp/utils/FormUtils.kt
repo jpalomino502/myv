@@ -1,10 +1,10 @@
 package com.example.oscarapp.utils
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -24,8 +24,10 @@ import java.util.*
 object FormUtils {
     const val REQUEST_IMAGE_SELECT = 2
     private const val PERMISSION_REQUEST_CODE = 100
-    private var imageView: ImageView? = null
-    private var imageCallback: ((String) -> Unit)? = null
+    private var serviceImageView: ImageView? = null
+    private var serviceImageCallback: ((String) -> Unit)? = null
+    private var additionalImageView: ImageView? = null
+    private var additionalImageCallback: ((String) -> Unit)? = null
 
     fun autofillForm(
         context: Context,
@@ -52,28 +54,42 @@ object FormUtils {
         direccionEditText.setText(ticket.ubicacionActividad)
         nitEditText.setText(ticket.cliente?.nitCc)
         telefonoEditText.setText(ticket.cliente?.telefono)
-        celularEditText.setText(ticket.cliente?.telefono)
+        celularEditText.setText(ticket.cliente?.celular)
         tipoDeServiciosEditText.setText(ticket.titulo)
         productoEditText.setText(ticket.producto)
         autorizacionClienteEditText.setText(ticket.cliente?.nombre)
         recibiClienteEditText.setText(ticket.cliente?.nombre)
-        //tipo_servicioEditText.setText(ticket.tipo_servicio)
 
         val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val userName = sharedPreferences.getString("userName", "")
         nombreTecnico.setText(userName)
 
-        // Configurar RadioGroup según el valor de tipo_servicio
-        when (ticket.tipo_servicio) {
+        when (ticket.tipoServicio) {  // Cambiado a tipoServicio
             "servicio" -> serviceRadioGroup.check(R.id.service)
             "refuerzo" -> serviceRadioGroup.check(R.id.reinforcement)
         }
-
     }
 
     fun showPhotoDialog(activity: Activity, imageView: ImageView?, callback: (String) -> Unit) {
-        this.imageView = imageView
-        this.imageCallback = callback
+        this.serviceImageView = imageView
+        this.serviceImageCallback = callback
+        val options = arrayOf("Seleccionar desde Explorador de Archivos", "Cancelar")
+        val builder = AlertDialog.Builder(activity)
+        builder.setTitle("Seleccione una opción")
+        builder.setItems(options) { dialog, which ->
+            when (which) {
+                0 -> {
+                    openFileExplorer(activity)
+                }
+                1 -> dialog.dismiss()
+            }
+        }
+        builder.show()
+    }
+
+    fun showAdditionalPhotoDialog(activity: Activity, imageView: ImageView?, callback: (String) -> Unit) {
+        this.additionalImageView = imageView
+        this.additionalImageCallback = callback
         val options = arrayOf("Seleccionar desde Explorador de Archivos", "Cancelar")
         val builder = AlertDialog.Builder(activity)
         builder.setTitle("Seleccione una opción")
@@ -105,10 +121,26 @@ object FormUtils {
                         val imageBitmap = BitmapFactory.decodeStream(inputStream)
                         if (imageBitmap != null) {
                             Log.d("FormUtils", "Loaded image bitmap from URI")
-                            imageView?.setImageBitmap(imageBitmap)
                             val base64Image = bitmapToBase64(imageBitmap)
-                            saveBase64ToPreferences(activity, base64Image)
-                            imageCallback?.invoke(base64Image)
+
+                            // Handle the service image
+                            if (serviceImageView != null) {
+                                serviceImageView?.setImageBitmap(imageBitmap)
+                                saveBase64ToPreferences(activity, base64Image, "base64_image")
+                                serviceImageCallback?.invoke(base64Image)
+                                serviceImageView = null // Reset variable after use
+                                serviceImageCallback = null // Reset callback after use
+                            }
+                            // Handle the additional image
+                            else if (additionalImageView != null) {
+                                additionalImageView?.setImageBitmap(imageBitmap)
+                                saveBase64ToPreferences(activity, base64Image, "foto_novedad") // Save with key "foto_novedad"
+                                additionalImageCallback?.invoke(base64Image)
+                                additionalImageView = null // Reset variable after use
+                                additionalImageCallback = null // Reset callback after use
+                            } else {
+                                Log.e("FormUtils", "No imageView found for the result")
+                            }
                         } else {
                             Log.e("FormUtils", "Failed to decode bitmap from URI")
                         }
@@ -124,11 +156,16 @@ object FormUtils {
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
         val byteArray = byteArrayOutputStream.toByteArray()
-        return "data:image/svg+xml;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)
+        return "data:image/jpeg;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)
     }
 
-    private fun saveBase64ToPreferences(context: Context, base64Image: String) {
+    fun saveBase64ToPreferences(context: Context, base64Image: String, key: String) {
         val sharedPreferences = context.getSharedPreferences("base64_prefs", Context.MODE_PRIVATE)
-        sharedPreferences.edit().putString("base64_image", base64Image).apply()
+        sharedPreferences.edit().putString(key, base64Image).apply()
+    }
+
+    fun getBase64Image(context: Context, key: String): String? {
+        val sharedPreferences = context.getSharedPreferences("base64_prefs", Context.MODE_PRIVATE)
+        return sharedPreferences.getString(key, null)
     }
 }

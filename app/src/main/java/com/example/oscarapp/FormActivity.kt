@@ -19,6 +19,7 @@ import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.oscarapp.models.Diligencia
 import com.example.oscarapp.models.ServiceRequest
 import com.example.oscarapp.models.Ticket
 import com.example.oscarapp.network.ApiService
@@ -65,19 +66,12 @@ class FormActivity : AppCompatActivity() {
     private lateinit var autorizacion_clienteEditText: EditText
     private lateinit var recibi_clienteEditText: EditText
 
-
-
-
-
-    private var currentImageView: ImageView? = null
-
     private val networkReceiver = NetworkReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_form)
 
-        // Inicializar base64Image a un valor vacío
         clearBase64Image()
 
         tipoDeServiciosEditText = findViewById(R.id.titulo)
@@ -102,7 +96,6 @@ class FormActivity : AppCompatActivity() {
         autorizacion_clienteEditText = findViewById(R.id.autorizacion_cliente)
 
         val serviceRadioGroup = findViewById<RadioGroup>(R.id.service_radio_group)
-
 
         btnClear.setOnClickListener {
             signatureView.clear()
@@ -153,13 +146,11 @@ class FormActivity : AppCompatActivity() {
             )
         }
 
-        // Registrar el receptor de red
         registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Desregistrar el receptor de red
         unregisterReceiver(networkReceiver)
     }
 
@@ -249,8 +240,14 @@ class FormActivity : AppCompatActivity() {
         val firmaBitmap = signatureView.getSignatureBitmap()
         val firmaBase64 = firmaBitmap?.let { encodeToBase64(it) } ?: ""
 
+        // Obtener foto_novedad desde SharedPreferences
+        val fotoNovedadBase64 = sharedPreferences.getString("foto_novedad", "")
+
         // Condición para verificar si base64Image está presente
         val imageBase64 = if (base64Image.isNullOrEmpty()) "" else base64Image
+
+        // Condición para verificar si foto_novedad está presente
+        val fotoNovedad = if (fotoNovedadBase64.isNullOrEmpty()) "" else fotoNovedadBase64
 
         val serviceRequest = ServiceRequest(
             ticketId = ticket.id,
@@ -286,10 +283,12 @@ class FormActivity : AppCompatActivity() {
             informeserviciojson = encuestaJsonString,
             serviciosjson = serviciosJsonString,
             titulo = titulo,
+            foto_novedad = fotoNovedad
         )
 
         sendDataToServer(serviceRequest)
     }
+
 
     private fun encodeToBase64(bitmap: Bitmap): String {
         val outputStream = ByteArrayOutputStream()
