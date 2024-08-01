@@ -13,7 +13,7 @@ data class Ticket(
     @SerializedName("cliente_id") val clienteId: String,
     @SerializedName("user_id") val userId: String,
     @SerializedName("fechahora_programada") val fechaHoraProgramada: String?,
-    @SerializedName("estado") val estado: String,
+    @SerializedName("estado") var estado: String,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("updated_at") val updatedAt: String,
     @SerializedName("cliente") val cliente: Cliente,

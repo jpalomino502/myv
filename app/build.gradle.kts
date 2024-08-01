@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.material.v140)
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.work.runtime.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

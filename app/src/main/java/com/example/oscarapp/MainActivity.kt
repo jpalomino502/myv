@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
     private val updateInterval: Long = 5000
 
     private lateinit var requestWritePermissionLauncher: ActivityResultLauncher<IntentSenderRequest>
-    private val networkReceiver = NetworkReceiver()
+    private val networkReceiver = NetworkChangeReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,6 +102,10 @@ class MainActivity : AppCompatActivity() {
 
         requestNecessaryPermissions()
 
+        val intent = Intent(this, DataSyncService::class.java)
+        startService(intent)
+        Log.d("MainActivity", "DataSyncService started from MainActivity")
+
         requestWritePermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 Toast.makeText(this, "Permiso de escritura concedido", Toast.LENGTH_SHORT).show()
@@ -114,7 +118,6 @@ class MainActivity : AppCompatActivity() {
 
         registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
 
-        // Iniciar la actualización periódica de tickets
         startPeriodicUpdates()
     }
 
@@ -238,39 +241,32 @@ class MainActivity : AppCompatActivity() {
         call?.enqueue(object : Callback<TicketResponse> {
             override fun onResponse(call: Call<TicketResponse>, response: Response<TicketResponse>) {
                 if (response.isSuccessful) {
-                    val ticketResponse = response.body()
-                    ticketResponse?.let {
-                        runOnUiThread {
-                            val tickets = it.tickets.filter { ticket -> ticket.estado != "cerrado" }
-                            adapter = TicketAdapter(tickets) { ticket ->
-                                openFormActivity(ticket)
-                            }
-                            recyclerView.adapter = adapter
-                            saveTickets(tickets)
+                    response.body()?.let { ticketResponse ->
+                        val tickets = ticketResponse.tickets.filter { it.estado != "cerrado" }
+                        adapter = TicketAdapter(tickets) { ticket ->
+                            openFormActivity(ticket)
                         }
+                        recyclerView.adapter = adapter
+                        saveTickets(ticketResponse.tickets)
                     }
-                } else {
-                    Log.e("API_ERROR", "Error: ${response.errorBody()?.string()}")
                 }
             }
 
             override fun onFailure(call: Call<TicketResponse>, t: Throwable) {
-                Log.e("NETWORK_ERROR", "Exception: ${t.message}")
+                Log.e("MainActivity", "Error al obtener tickets", t)
             }
         })
     }
 
     private fun saveTickets(tickets: List<Ticket>) {
-        val editor = sharedPreferences.edit()
         val gson = Gson()
         val json = gson.toJson(tickets)
-        editor.putString("savedTickets", json)
-        editor.apply()
+        sharedPreferences.edit().putString("tickets", json).apply()
     }
 
     private fun getSavedTickets(): List<Ticket> {
         val gson = Gson()
-        val json = sharedPreferences.getString("savedTickets", null)
+        val json = sharedPreferences.getString("tickets", null)
         val type = object : TypeToken<List<Ticket>>() {}.type
         return if (json != null) {
             gson.fromJson(json, type)
@@ -324,7 +320,9 @@ class MainActivity : AppCompatActivity() {
                     val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
                     val serviceRequests = listAdapter.fromJson(serviceRequestsJson) ?: mutableListOf()
 
-                    serviceRequests.forEach { serviceRequest ->
+                    val serviceRequestsCopy = serviceRequests.toMutableList()
+
+                    serviceRequestsCopy.forEach { serviceRequest ->
                         try {
                             val apiService = RetrofitClient.retrofitInstance.create(ApiService::class.java)
                             val response = apiService.sendServiceRequest(serviceRequest)
@@ -332,7 +330,7 @@ class MainActivity : AppCompatActivity() {
                             withContext(Dispatchers.Main) {
                                 if (response.isSuccessful) {
                                     Log.d("MainActivity", "Datos enviados exitosamente")
-                                    removeSentData(serviceRequest)
+                                    serviceRequests.remove(serviceRequest)
                                 } else {
                                     Toast.makeText(this@MainActivity, "Error al enviar datos: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
                                 }
@@ -343,7 +341,15 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     }
-                    clearLocalData()
+
+                    withContext(Dispatchers.Main) {
+                        val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
+                        sharedPreferences.edit().putString("service_request_data_list", updatedJson).apply()
+
+                        if (serviceRequests.isEmpty()) {
+                            clearLocalData()
+                        }
+                    }
                 }
             }
         }
@@ -371,10 +377,10 @@ class MainActivity : AppCompatActivity() {
 
     private inner class NetworkReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            checkNetworkStatus()
             if (isNetworkConnected()) {
                 sendPendingServiceRequests()
             }
-            checkNetworkStatus()
         }
     }
 }

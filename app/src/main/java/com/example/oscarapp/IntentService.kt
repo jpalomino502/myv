@@ -31,7 +31,7 @@ class DataSyncService : IntentService("DataSyncService") {
             val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
             val serviceRequests = listAdapter.fromJson(json) ?: mutableListOf()
 
-            val serviceRequestsCopy = serviceRequests.toMutableList() // Crear una copia de la lista original
+            val serviceRequestsCopy = serviceRequests.toMutableList()
 
             CoroutineScope(Dispatchers.IO).launch {
                 serviceRequestsCopy.forEach { serviceRequest ->
@@ -54,14 +54,12 @@ class DataSyncService : IntentService("DataSyncService") {
                     }
                 }
 
-                // Actualizar los datos locales después de intentar enviar todos los formularios
                 withContext(Dispatchers.Main) {
                     val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
                     val editor = sharedPreferences.edit()
                     editor.putString("service_request_data_list", updatedJson)
                     editor.apply()
 
-                    // Si todos los datos fueron enviados, limpiar el almacenamiento local
                     if (serviceRequests.isEmpty()) {
                         clearLocalData()
                     }
@@ -72,10 +70,7 @@ class DataSyncService : IntentService("DataSyncService") {
 
     private fun clearLocalData() {
         val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)
-        with(sharedPreferences.edit()) {
-            clear()
-            apply()
-        }
+        sharedPreferences.edit().clear().apply()
         Log.d("DataSyncService", "Datos locales borrados de SharedPreferences")
     }
 }

@@ -23,6 +23,7 @@ signaturepad = "1.2.0"
 signatureview = "1.0.0"
 firebaseCrashlyticsBuildtools = "3.0.2"
 roomKtx = "2.6.1"
+workRuntimeKtx = "2.9.0"
 
 [libraries]
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
@@ -56,6 +57,7 @@ signaturepad = { module = "com.github.github:SignaturePad", version.ref = "signa
 signatureview = { module = "com.github.fyba:SignatureView", version.ref = "signatureview" }
 firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
