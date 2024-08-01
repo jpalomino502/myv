@@ -64,6 +64,12 @@ class FormActivity : AppCompatActivity() {
     private lateinit var productoEditText: EditText
     private lateinit var autorizacion_clienteEditText: EditText
     private lateinit var recibi_clienteEditText: EditText
+    private lateinit var tipoPagoRadioGroup: RadioGroup
+    private lateinit var dosificacionEditText: EditText
+    private lateinit var concentracionEditText: EditText
+    private lateinit var cantidadEditText: EditText
+    private lateinit var valortotalEditText: EditText
+    private lateinit var nombre_asesorEditText: EditText
 
     private val networkReceiver = NetworkReceiver()
 
@@ -71,7 +77,6 @@ class FormActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_form)
 
-        // Inicialización de vistas
         tipoDeServiciosEditText = findViewById(R.id.titulo)
         fechaEditText = findViewById(R.id.fecha)
         horaIngresoEditText = findViewById(R.id.horaingreso)
@@ -92,28 +97,28 @@ class FormActivity : AppCompatActivity() {
         productoEditText = findViewById(R.id.producto)
         recibi_clienteEditText = findViewById(R.id.recibi_cliente)
         autorizacion_clienteEditText = findViewById(R.id.autorizacion_cliente)
-
+        tipoPagoRadioGroup = findViewById(R.id.tipo_pago_radio_group)
+        dosificacionEditText = findViewById(R.id.dosificacion)
+        concentracionEditText = findViewById(R.id.concentracion)
+        cantidadEditText = findViewById(R.id.cantidad)
+        valortotalEditText = findViewById(R.id.valortotal)
+        nombre_asesorEditText = findViewById(R.id.nombre_asesor)
         val serviceRadioGroup = findViewById<RadioGroup>(R.id.service_radio_group)
         encuestaContainer = findViewById(R.id.encuesta_container)
         equiposContainer = findViewById(R.id.equipo_proteccion_container)
         val serviciosContainer = findViewById<LinearLayout>(R.id.servicios_container)
-
-        // Configuración de DateTimePickers
         DateTimeUtils.setupDatePicker(fechaEditText, this)
         DateTimeUtils.setupTimePicker(horaIngresoEditText, this)
         DateTimeUtils.setupTimePicker(horaSalidaEditText, this)
         DateTimeUtils.setupDatePicker(fechaVencimientoEditText, this)
         DateTimeUtils.setupDateTimePicker(fechaRealizarEditText, this)
         DateTimeUtils.setupDateTimePicker(fechaProximoEditText, this)
-
-        // Configuración de botones
         btnClear.setOnClickListener {
             signatureView.clear()
         }
-
         btnSave.setOnClickListener {
             if (isFormValid()) {
-                btnSave.isEnabled = false // Deshabilitar el botón
+                btnSave.isEnabled = false
                 saveFormData()
             }
         }
@@ -139,20 +144,23 @@ class FormActivity : AppCompatActivity() {
                 serviceRadioGroup,
                 it,
                 fechaProximoEditText,
-                fechaRealizarEditText
+                fechaRealizarEditText,
+                tipoPagoRadioGroup,
+                fechaVencimientoEditText,
+                dosificacionEditText,
+                concentracionEditText,
+                cantidadEditText,
+                valortotalEditText,
+                nombre_asesorEditText,
             )
 
 
-        // Rellenar la encuesta
             FormDataPopulator.populateEncuesta(this, encuestaContainer)
 
-            // Rellenar los equipos de protección
             val diligencia = it.diligencias.firstOrNull()
             diligencia?.let { d ->
                 val equiposJson = d.equiposJson
                 FormDataPopulator.populateEquipos(this, equiposContainer, equiposJson)
-
-                // Rellenar los servicios
                 val serviciosJson = d.serviciosJson
                 FormDataPopulator.populateServicios(this, serviciosContainer, serviciosJson)
             }
@@ -287,7 +295,7 @@ class FormActivity : AppCompatActivity() {
             nombre_tecnico = findViewById<EditText>(R.id.nombre_tecnico).text.toString(),
             ulr_ratones = imageBase64,
             firma = firmaBase64,
-            observaciones3 = "",
+            observaciones3 = findViewById<EditText>(R.id.observaciones3).text.toString(),
             serviciosjson = serviciosJson,
             informeserviciojson = encuestaJsonString,
             titulo = titulo,

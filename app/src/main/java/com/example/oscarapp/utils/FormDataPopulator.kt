@@ -3,7 +3,9 @@ package com.example.oscarapp.utils
 import android.app.Activity
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.text.Editable
 import android.text.InputType
+import android.text.TextWatcher
 import android.util.Log
 import android.widget.*
 import androidx.core.view.children
@@ -169,7 +171,15 @@ object FormDataPopulator {
                     setPadding(16, 16, 16, 16)
                     setTextColor(Color.BLACK)
                     setHintTextColor(Color.BLACK)
-                    setText("")
+                    setText(itemValue)
+                    addTextChangedListener(object : TextWatcher {
+                        override fun afterTextChanged(s: Editable?) {
+                            item.put("value", s.toString())
+                            printNewJson(modifiedServiciosArray)
+                        }
+                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                    })
                 }
                 itemLayout.addView(cantidadEditText)
 
@@ -188,6 +198,7 @@ object FormDataPopulator {
                         text = "Seleccionar Foto"
                         setOnClickListener {
                             FormUtils.showPhotoDialog(activity, imageView) { base64Image ->
+                                // Aquí puedes manejar la imagen seleccionada si es necesario
                             }
                         }
                         setPadding(16, 16, 16, 16)
@@ -223,6 +234,7 @@ object FormDataPopulator {
     private fun printNewJson(modifiedServiciosArray: JSONArray) {
         Log.d("FormDataPopulator", "Modified JSON: ${modifiedServiciosArray.toString()}")
     }
+
 
     fun populateEquipos(activity: Activity, equiposContainer: LinearLayout, equiposJson: String) {
         try {

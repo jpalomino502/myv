@@ -598,6 +598,23 @@
                 android:padding="12dp"
                 android:layout_marginTop="16dp">
             </LinearLayout>
+            <!-- Observaciones -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp">
+                <EditText
+                    android:id="@+id/observaciones3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:textColor="@color/black"
+                    android:background="@drawable/border_rounded"
+                    android:padding="12dp"
+                    android:hint="Observaciones"
+                    android:textColorHint="@color/black"/>
+            </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

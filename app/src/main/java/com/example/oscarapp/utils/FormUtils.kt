@@ -1,5 +1,6 @@
 package com.example.oscarapp.utils
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
@@ -43,7 +44,14 @@ object FormUtils {
         serviceRadioGroup: RadioGroup,
         ticket: Ticket,
         fechaproximoEditText: EditText,
-        fecharealizarEditText: EditText
+        fecharealizarEditText: EditText,
+        tipoPagoRadioGroup: RadioGroup,
+        fechavencimientoEditText: EditText,
+        dosificacionEditText: EditText,
+        concentracionEditText: EditText,
+        cantidadEditText: EditText,
+        valortotalEditText: EditText,
+        nombre_asesorEditText: EditText
     ) {
         // Formatos de fecha
         val dateOnlyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -65,11 +73,12 @@ object FormUtils {
         telefonoEditText.setText(ticket.cliente?.telefono)
         celularEditText.setText(ticket.cliente?.celular)
         tipoDeServiciosEditText.setText(ticket.titulo)
-        productoEditText.setText(ticket.producto)
-
-        // Usa el nombre del usuario en el campo nombreTecnico
-        nombre_tecnico.setText(ticket.userResponse?.user?.name ?: "")
-
+        dosificacionEditText.setText(ticket.diligencias.firstOrNull()?.dosificacion)
+        concentracionEditText.setText(ticket.diligencias.firstOrNull()?.concentracion)
+        cantidadEditText.setText(ticket.diligencias.firstOrNull()?.cantidad)
+        valortotalEditText.setText(ticket.diligencias.firstOrNull()?.valortotal)
+        nombre_asesorEditText.setText(ticket.diligencias.firstOrNull()?.nombre_asesor)
+        productoEditText.setText(ticket.diligencias.firstOrNull()?.producto)
         autorizacionClienteEditText.setText(ticket.cliente?.nombre)
         recibiClienteEditText.setText(ticket.cliente?.nombre)
 
@@ -89,23 +98,43 @@ object FormUtils {
             it.isEnabled = false
         }
 
+        // Asegúrate de que diligencias no está vacío
+        val diligencia = ticket.diligencias.firstOrNull()
+
         // Establece el valor para el campo de fecha realizar (fecha y hora)
-        val fechaRealizar = ticket.diligencias.firstOrNull()?.fechaRealizar
-        fecharealizarEditText.setText(fechaRealizar?.let { dateTimeFormat.format(it) } ?: "Fecha no disponible")
+        fecharealizarEditText.setText(
+            diligencia?.fechaRealizar?.let { dateTimeFormat.format(it) } ?: "Fecha no disponible"
+        )
 
         // Establece el valor para el campo de fecha próximo (fecha y hora)
-        val fechaProximo = ticket.diligencias.firstOrNull()?.fechaProximo
-        fechaproximoEditText.setText(fechaProximo?.let { dateTimeFormat.format(it) } ?: "Fecha no disponible")
+        fechaproximoEditText.setText(
+            diligencia?.fechaProximo?.let { dateTimeFormat.format(it) } ?: "Fecha no disponible"
+        )
+
+        // Establece el valor para el campo de fecha de vencimiento (solo fecha)
+        fechavencimientoEditText.setText(
+            diligencia?.fechaVencimiento?.let { dateOnlyFormat.format(it) } ?: "Fecha no disponible"
+        )
+
+        // Establece el valor para el campo de nombre técnico
+        nombre_tecnico.setText(diligencia?.nombreTecnico ?: "Nombre no disponible")
 
         // Configura el RadioGroup basado en el tipo de servicio
-        val tipoServicio = ticket.diligencias.firstOrNull()?.tipoServicio
+        val tipoServicio = diligencia?.tipoServicio
         when (tipoServicio) {
             "servicio" -> serviceRadioGroup.check(R.id.service)
             "refuerzo" -> serviceRadioGroup.check(R.id.reinforcement)
             else -> serviceRadioGroup.clearCheck()
         }
-    }
 
+        // Configura el RadioGroup para el tipo de pago
+        val tipoPago = diligencia?.tipoPago
+        when (tipoPago) {
+            "credito" -> tipoPagoRadioGroup.check(R.id.valorcredito)
+            "contado" -> tipoPagoRadioGroup.check(R.id.valorcontado)
+            else -> tipoPagoRadioGroup.clearCheck()
+        }
+    }
 
     fun showPhotoDialog(activity: Activity, imageView: ImageView?, callback: (String) -> Unit) {
         this.serviceImageView = imageView
