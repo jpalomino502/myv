@@ -276,7 +276,7 @@ class FormActivity : AppCompatActivity() {
             nit = nitEditText.text.toString(),
             telefono = telefonoEditText.text.toString(),
             celular = celularEditText.text.toString(),
-            observaciones1 = findViewById<EditText>(R.id.observaciones1).text.toString(),
+           // observaciones1 = findViewById<EditText>(R.id.observaciones1).text.toString(),
             horaingreso = horaIngresoEditText.text.toString(),
             horasalida = horaSalidaEditText.text.toString(),
             producto = findViewById<EditText>(R.id.producto).text.toString(),

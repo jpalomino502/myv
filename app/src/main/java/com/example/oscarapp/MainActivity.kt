@@ -102,10 +102,6 @@ class MainActivity : AppCompatActivity() {
 
         requestNecessaryPermissions()
 
-        val intent = Intent(this, DataSyncService::class.java)
-        startService(intent)
-        Log.d("MainActivity", "DataSyncService started from MainActivity")
-
         requestWritePermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 Toast.makeText(this, "Permiso de escritura concedido", Toast.LENGTH_SHORT).show()
