@@ -95,6 +95,7 @@ class FormActivity : AppCompatActivity() {
         val serviceRadioGroup = findViewById<RadioGroup>(R.id.service_radio_group)
         encuestaContainer = findViewById(R.id.encuesta_container)
         equiposContainer = findViewById(R.id.equipo_proteccion_container)
+        val serviciosContainer = findViewById<LinearLayout>(R.id.servicios_container)
 
         // Configuración de DateTimePickers
         DateTimeUtils.setupDatePicker(fechaEditText, this)
@@ -146,13 +147,15 @@ class FormActivity : AppCompatActivity() {
             diligencia?.let { d ->
                 val equiposJson = d.equiposJson
                 FormDataPopulator.populateEquipos(this, equiposContainer, equiposJson)
+
+                // Rellenar los servicios
+                val serviciosJson = d.serviciosJson
+                FormDataPopulator.populateServicios(this, serviciosContainer, serviciosJson)
             }
         }
 
         registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
     }
-
-
 
     override fun onDestroy() {
         super.onDestroy()

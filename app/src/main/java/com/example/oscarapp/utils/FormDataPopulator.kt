@@ -3,6 +3,7 @@ package com.example.oscarapp.utils
 import android.app.Activity
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.text.InputType
 import android.util.Log
 import android.widget.*
 import androidx.core.view.children
@@ -11,6 +12,178 @@ import org.json.JSONArray
 import org.json.JSONException
 
 object FormDataPopulator {
+
+    fun populateServicios(activity: Activity, serviciosContainer: LinearLayout, serviciosJson: String) {
+        try {
+            val serviciosArray = JSONArray(serviciosJson)
+            serviciosContainer.removeAllViews()
+
+            for (i in 0 until serviciosArray.length()) {
+                val servicioObj = serviciosArray.getJSONObject(i)
+                val servicioName = servicioObj.optString("servicio", "Servicio Sin Nombre")
+
+                // Añadir el nombre del servicio como un título
+                val servicioTitle = TextView(activity).apply {
+                    text = servicioName
+                    textSize = 20f
+                    setPadding(16, 16, 16, 8)
+                    setTextColor(Color.BLACK)
+                }
+                serviciosContainer.addView(servicioTitle)
+
+                // Añadir los elementos de la sección
+                val itemsArray = servicioObj.optJSONArray("plagas") ?: JSONArray()
+                addSectionItems(activity, serviciosContainer, itemsArray, "Plagas", servicioName)
+
+                // Añadir métodos
+                val metodosArray = servicioObj.optJSONArray("metodos") ?: JSONArray()
+                if (metodosArray.length() > 0) {
+                    val metodosLayout = LinearLayout(activity).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(0, 0, 0, 16)
+                    }
+                    val metodosTitle = TextView(activity).apply {
+                        text = "Métodos"
+                        textSize = 18f
+                        setPadding(16, 16, 16, 8)
+                        setTextColor(Color.BLACK)
+                    }
+                    metodosLayout.addView(metodosTitle)
+
+                    for (k in 0 until metodosArray.length()) {
+                        val metodoObj = metodosArray.getJSONObject(k)
+                        val metodoName = metodoObj.optString("name", "Método Sin Nombre")
+                        val metodoChecked = metodoObj.optBoolean("checked", false)
+
+                        val checkBox = CheckBox(activity).apply {
+                            text = metodoName
+                            isChecked = metodoChecked
+                            isEnabled = false
+                            setTextColor(Color.BLACK)
+                            buttonTintList = ColorStateList.valueOf(Color.BLACK)
+                            setPadding(16, 16, 16, 16)
+                        }
+                        metodosLayout.addView(checkBox)
+                    }
+                    serviciosContainer.addView(metodosLayout)
+                }
+
+                // Añadir grados
+                val gradosArray = servicioObj.optJSONArray("grados") ?: JSONArray()
+                if (gradosArray.length() > 0) {
+                    val gradosLayout = LinearLayout(activity).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        setPadding(0, 0, 0, 16)
+                    }
+                    val gradosTitle = TextView(activity).apply {
+                        text = "Grados"
+                        textSize = 18f
+                        setPadding(16, 16, 16, 8)
+                        setTextColor(Color.BLACK)
+                    }
+                    gradosLayout.addView(gradosTitle)
+
+                    for (j in 0 until gradosArray.length()) {
+                        val gradoObj = gradosArray.getJSONObject(j)
+                        val gradoName = gradoObj.optString("name", "Grado Sin Nombre")
+                        val gradoChecked = gradoObj.optBoolean("checked", false)
+
+                        val radioButton = RadioButton(activity).apply {
+                            text = gradoName
+                            isChecked = gradoChecked
+                            isEnabled = false
+                            setTextColor(Color.BLACK)
+                            buttonTintList = ColorStateList.valueOf(Color.BLACK)
+                        }
+                        gradosLayout.addView(radioButton)
+                    }
+                    serviciosContainer.addView(gradosLayout)
+                }
+            }
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun addSectionItems(
+        activity: Activity,
+        layout: LinearLayout,
+        items: JSONArray,
+        sectionName: String,
+        servicioName: String
+    ) {
+        val sectionLayout = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 0, 0, 16)
+        }
+        val sectionHeader = TextView(activity).apply {
+            text = sectionName
+            textSize = 18f
+            setTextColor(Color.BLACK)
+        }
+        sectionLayout.addView(sectionHeader)
+
+        for (i in 0 until items.length()) {
+            val item = items.getJSONObject(i)
+            val itemName = item.optString("name", "Sin nombre")
+            val itemChecked = item.optBoolean("checked", false)
+            val itemValue = item.optString("value", "")
+
+            val itemLayout = LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setPadding(0, 0, 0, 8)
+            }
+
+            if (itemName == "Cantidad") {
+                val cantidadEditText = EditText(activity).apply {
+                    inputType = InputType.TYPE_CLASS_NUMBER
+                    hint = "Cantidad"
+                    setPadding(16, 16, 16, 16)
+                    setTextColor(Color.BLACK)
+                    setHintTextColor(Color.BLACK)
+                    setText("")
+                }
+                itemLayout.addView(cantidadEditText)
+
+                // Añadir ImageView para mostrar la foto
+                val imageView = ImageView(activity).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        400
+                    )
+                    setPadding(16, 16, 16, 16)
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                }
+                sectionLayout.addView(imageView)
+
+                if (servicioName == "Servicio 10") {
+                    val fotoButton = Button(activity).apply {
+                        text = "Seleccionar Foto"
+                        setOnClickListener {
+                            FormUtils.showPhotoDialog(activity, imageView) { base64Image ->
+                                // Aquí puedes manejar la imagen capturada si es necesario
+                            }
+                        }
+                        setPadding(16, 16, 16, 16)
+                        setBackgroundColor(Color.BLACK)
+                        setTextColor(Color.WHITE)
+                    }
+                    itemLayout.addView(fotoButton)
+                }
+            } else if (itemName != "Foto") {
+                val checkBox = CheckBox(activity).apply {
+                    text = itemName
+                    isChecked = itemChecked
+                    setTextColor(Color.BLACK)
+                    buttonTintList = ColorStateList.valueOf(Color.BLACK)
+                }
+                itemLayout.addView(checkBox)
+            }
+            sectionLayout.addView(itemLayout)
+        }
+        layout.addView(sectionLayout)
+    }
+
 
     fun populateEquipos(activity: Activity, equiposContainer: LinearLayout, equiposJson: String) {
         try {
