@@ -14,7 +14,7 @@ data class ServiceRequest(
     @SerializedName("nit") val nit: String,
     @SerializedName("telefono") val telefono: String,
     @SerializedName("celular") val celular: String,
-    @SerializedName("observaciones1") val observaciones1: String,
+    //@SerializedName("observaciones1") val observaciones1: String,
     @SerializedName("horaingreso") val horaingreso: String,
     @SerializedName("horasalida") val horasalida: String,
     @SerializedName("producto") val producto: String,
@@ -36,5 +36,6 @@ data class ServiceRequest(
     @SerializedName("observaciones3") val observaciones3: String,
     @SerializedName("informeserviciojson") val informeserviciojson: String,
     @SerializedName("serviciosjson") val serviciosjson: String,
-    @SerializedName("foto_novedad") val foto_novedad: String
+    @SerializedName("foto_novedad") val foto_novedad: String,
+
 )
