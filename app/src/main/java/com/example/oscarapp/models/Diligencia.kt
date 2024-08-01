@@ -5,20 +5,28 @@ import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
 
 data class Diligencia(
-    @SerializedName("equiposjson") val equiposJson: String,
+    @SerializedName("id") val id: String,
+    @SerializedName("ticket_id") val ticketId: String,
+    @SerializedName("tipo_servicio") val tipoServicio: String,
     @SerializedName("serviciosjson") val serviciosJson: String,
-    @SerializedName("informeserviciojson") val informeServicioJson: String
+    @SerializedName("equiposjson") val equiposJson: String
+
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
-        equiposJson = parcel.readString() ?: "",
+        id = parcel.readString() ?: "",
+        ticketId = parcel.readString() ?: "",
+        tipoServicio = parcel.readString() ?: "",
         serviciosJson = parcel.readString() ?: "",
-        informeServicioJson = parcel.readString() ?: ""
+        equiposJson = parcel.readString() ?: ""
+
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(equiposJson)
+        parcel.writeString(id)
+        parcel.writeString(ticketId)
+        parcel.writeString(tipoServicio)
         parcel.writeString(serviciosJson)
-        parcel.writeString(informeServicioJson)
+        parcel.writeString(equiposJson)
     }
 
     override fun describeContents(): Int {

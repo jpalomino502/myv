@@ -19,7 +19,6 @@ import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.oscarapp.models.Diligencia
 import com.example.oscarapp.models.ServiceRequest
 import com.example.oscarapp.models.Ticket
 import com.example.oscarapp.network.ApiService
@@ -48,9 +47,8 @@ class FormActivity : AppCompatActivity() {
     private lateinit var fechaVencimientoEditText: EditText
     private lateinit var fechaRealizarEditText: EditText
     private lateinit var fechaProximoEditText: EditText
-    private lateinit var serviciosContainer: LinearLayout
     private lateinit var encuestaContainer: LinearLayout
-    private lateinit var equipoProteccionContainer: LinearLayout
+    private lateinit var equiposContainer: LinearLayout
     private lateinit var serviceControlEditText: EditText
     private lateinit var razonSocialEditText: EditText
     private lateinit var direccionEditText: EditText
@@ -72,8 +70,7 @@ class FormActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_form)
 
-        clearBase64Image()
-
+        // Inicialización de vistas
         tipoDeServiciosEditText = findViewById(R.id.titulo)
         fechaEditText = findViewById(R.id.fecha)
         horaIngresoEditText = findViewById(R.id.horaingreso)
@@ -96,12 +93,21 @@ class FormActivity : AppCompatActivity() {
         autorizacion_clienteEditText = findViewById(R.id.autorizacion_cliente)
 
         val serviceRadioGroup = findViewById<RadioGroup>(R.id.service_radio_group)
+        encuestaContainer = findViewById(R.id.encuesta_container)
+        equiposContainer = findViewById(R.id.equipo_proteccion_container)
 
+        // Configuración de DateTimePickers
+        DateTimeUtils.setupDatePicker(fechaEditText, this)
+        DateTimeUtils.setupTimePicker(horaIngresoEditText, this)
+        DateTimeUtils.setupTimePicker(horaSalidaEditText, this)
+        DateTimeUtils.setupDatePicker(fechaVencimientoEditText, this)
+        DateTimeUtils.setupDateTimePicker(fechaRealizarEditText, this)
+        DateTimeUtils.setupDateTimePicker(fechaProximoEditText, this)
+
+        // Configuración de botones
         btnClear.setOnClickListener {
             signatureView.clear()
         }
-
-        btnSave = findViewById(R.id.btnSave)
 
         btnSave.setOnClickListener {
             if (isFormValid()) {
@@ -110,23 +116,10 @@ class FormActivity : AppCompatActivity() {
             }
         }
 
-        DateTimeUtils.setupDatePicker(fechaEditText, this)
-        DateTimeUtils.setupTimePicker(horaIngresoEditText, this)
-        DateTimeUtils.setupTimePicker(horaSalidaEditText, this)
-        DateTimeUtils.setupDatePicker(fechaVencimientoEditText, this)
-        DateTimeUtils.setupDateTimePicker(fechaRealizarEditText, this)
-        DateTimeUtils.setupDateTimePicker(fechaProximoEditText, this)
-
-        serviciosContainer = findViewById(R.id.servicios_container)
-        encuestaContainer = findViewById(R.id.encuesta_container)
-        equipoProteccionContainer = findViewById(R.id.equipo_proteccion_container)
-
-        FormDataPopulator.populateServicios(this, serviciosContainer)
-        FormDataPopulator.populateEncuesta(this, encuestaContainer)
-        FormDataPopulator.populateEquipoProteccion(this, equipoProteccionContainer)
-
+        // Obtener el Ticket desde el intent
         val ticket = intent.getParcelableExtra<Ticket>("ticket")
         ticket?.let {
+            // Autofill del formulario con los datos del Ticket
             FormUtils.autofillForm(
                 this,
                 serviceControlEditText,
@@ -144,10 +137,22 @@ class FormActivity : AppCompatActivity() {
                 serviceRadioGroup,
                 it
             )
+
+            // Rellenar la encuesta
+            FormDataPopulator.populateEncuesta(this, encuestaContainer)
+
+            // Rellenar los equipos de protección
+            val diligencia = it.diligencias.firstOrNull()
+            diligencia?.let { d ->
+                val equiposJson = d.equiposJson
+                FormDataPopulator.populateEquipos(this, equiposContainer, equiposJson)
+            }
         }
 
         registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
     }
+
+
 
     override fun onDestroy() {
         super.onDestroy()
@@ -229,8 +234,6 @@ class FormActivity : AppCompatActivity() {
         }
 
         val encuestaJsonString = FormDataStorage.obtenerEncuestaSeleccionada(encuestaContainer)
-        val equiposJsonString = FormDataStorage.obtenerEquiposSeleccionados(equipoProteccionContainer)
-        val serviciosJsonString = FormDataStorage.obtenerServiciosSeleccionados(serviciosContainer)
 
         val titulo = tipoDeServiciosEditText.text.toString()
 
@@ -262,7 +265,6 @@ class FormActivity : AppCompatActivity() {
             observaciones1 = findViewById<EditText>(R.id.observaciones1).text.toString(),
             horaingreso = horaIngresoEditText.text.toString(),
             horasalida = horaSalidaEditText.text.toString(),
-            equiposjson = equiposJsonString,
             producto = findViewById<EditText>(R.id.producto).text.toString(),
             dosificacion = findViewById<EditText>(R.id.dosificacion).text.toString(),
             concentracion = findViewById<EditText>(R.id.concentracion).text.toString(),
@@ -281,7 +283,6 @@ class FormActivity : AppCompatActivity() {
             firma = firmaBase64,
             observaciones3 = "",
             informeserviciojson = encuestaJsonString,
-            serviciosjson = serviciosJsonString,
             titulo = titulo,
             foto_novedad = fotoNovedad
         )
