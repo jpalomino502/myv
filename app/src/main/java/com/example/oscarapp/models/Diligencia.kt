@@ -12,7 +12,14 @@ data class Diligencia(
     @SerializedName("serviciosjson") val serviciosJson: String,
     @SerializedName("equiposjson") val equiposJson: String,
     @SerializedName("fecharealizar") val fechaRealizar: Date?,
-    @SerializedName("fechaproximo") val fechaProximo: Date?
+    @SerializedName("fechaproximo") val fechaProximo: Date?,
+    @SerializedName("producto") val producto: String,
+    @SerializedName("dosificacion") val dosificacion: String,
+    @SerializedName("concentracion") val concentracion: String,
+    @SerializedName("cantidad") val cantidad: String,
+    @SerializedName("valortotal") val valortotal: String,
+    @SerializedName("nombre_asesor") val nombre_asesor: String,
+
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         id = parcel.readString() ?: "",
@@ -21,7 +28,16 @@ data class Diligencia(
         serviciosJson = parcel.readString() ?: "",
         equiposJson = parcel.readString() ?: "",
         fechaRealizar = parcel.readLong().takeIf { it != -1L }?.let { Date(it) },
-        fechaProximo = parcel.readLong().takeIf { it != -1L }?.let { Date(it) }
+        fechaProximo = parcel.readLong().takeIf { it != -1L }?.let { Date(it) },
+        producto = parcel.readString() ?: "",
+        dosificacion = parcel.readString() ?: "",
+        concentracion = parcel.readString() ?: "",
+        cantidad = parcel.readString() ?: "",
+        valortotal = parcel.readString() ?: "",
+        nombre_asesor = parcel.readString() ?: "",
+
+
+
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -32,6 +48,13 @@ data class Diligencia(
         parcel.writeString(equiposJson)
         parcel.writeLong(fechaRealizar?.time ?: -1L)
         parcel.writeLong(fechaProximo?.time ?: -1L)
+        parcel.writeString(producto)
+        parcel.writeString(dosificacion)
+        parcel.writeString(concentracion)
+        parcel.writeString(cantidad)
+        parcel.writeString(valortotal)
+        parcel.writeString(nombre_asesor)
+
     }
 
     override fun describeContents(): Int {

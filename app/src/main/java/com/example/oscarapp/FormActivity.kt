@@ -65,6 +65,13 @@ class FormActivity : AppCompatActivity() {
     private lateinit var autorizacion_clienteEditText: EditText
     private lateinit var recibi_clienteEditText: EditText
 
+    private lateinit var dosificacionEditText: EditText
+    private lateinit var concentracionEditText: EditText
+    private lateinit var cantidadEditText: EditText
+    private lateinit var valortotalEditText: EditText
+    private lateinit var nombre_asesorEditText: EditText
+
+
     private val networkReceiver = NetworkReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,6 +99,13 @@ class FormActivity : AppCompatActivity() {
         productoEditText = findViewById(R.id.producto)
         recibi_clienteEditText = findViewById(R.id.recibi_cliente)
         autorizacion_clienteEditText = findViewById(R.id.autorizacion_cliente)
+
+        dosificacionEditText = findViewById(R.id.dosificacion)
+        concentracionEditText = findViewById(R.id.concentracion)
+        cantidadEditText = findViewById(R.id.cantidad)
+        valortotalEditText = findViewById(R.id.valortotal)
+        nombre_asesorEditText = findViewById(R.id.nombre_asesor)
+
 
         val serviceRadioGroup = findViewById<RadioGroup>(R.id.service_radio_group)
         encuestaContainer = findViewById(R.id.encuesta_container)
@@ -139,7 +153,14 @@ class FormActivity : AppCompatActivity() {
                 serviceRadioGroup,
                 it,
                 fechaProximoEditText,
-                fechaRealizarEditText
+                fechaRealizarEditText,
+                dosificacionEditText,
+                concentracionEditText,
+                cantidadEditText,
+                valortotalEditText,
+                nombre_asesorEditText,
+
+
             )
 
 
@@ -268,7 +289,7 @@ class FormActivity : AppCompatActivity() {
             nit = nitEditText.text.toString(),
             telefono = telefonoEditText.text.toString(),
             celular = celularEditText.text.toString(),
-            observaciones1 = findViewById<EditText>(R.id.observaciones1).text.toString(),
+            //observaciones1 = findViewById<EditText>(R.id.observaciones1).text.toString(),
             horaingreso = horaIngresoEditText.text.toString(),
             horasalida = horaSalidaEditText.text.toString(),
             producto = findViewById<EditText>(R.id.producto).text.toString(),

@@ -43,7 +43,12 @@ object FormUtils {
         serviceRadioGroup: RadioGroup,
         ticket: Ticket,
         fechaproximoEditText: EditText,
-        fecharealizarEditText: EditText
+        fecharealizarEditText: EditText,
+        dosificacionEditText: EditText,
+        concentracionEditText: EditText,
+        cantidadEditText: EditText,
+        valortotalEditText: EditText,
+        nombre_asesorEditText: EditText,
     ) {
         // Formatos de fecha
         val dateOnlyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -65,13 +70,20 @@ object FormUtils {
         telefonoEditText.setText(ticket.cliente?.telefono)
         celularEditText.setText(ticket.cliente?.celular)
         tipoDeServiciosEditText.setText(ticket.titulo)
-        productoEditText.setText(ticket.producto)
+        productoEditText.setText(ticket.diligencias.firstOrNull()?.producto)
 
         // Usa el nombre del usuario en el campo nombreTecnico
         nombre_tecnico.setText(ticket.userResponse?.user?.name ?: "")
 
         autorizacionClienteEditText.setText(ticket.cliente?.nombre)
         recibiClienteEditText.setText(ticket.cliente?.nombre)
+
+        dosificacionEditText.setText(ticket.diligencias.firstOrNull()?.dosificacion)
+        concentracionEditText.setText(ticket.diligencias.firstOrNull()?.concentracion)
+        cantidadEditText.setText(ticket.diligencias.firstOrNull()?.cantidad)
+        valortotalEditText.setText(ticket.diligencias.firstOrNull()?.valortotal)
+        nombre_asesorEditText.setText(ticket.diligencias.firstOrNull()?.nombre_asesor)
+
 
         // Configura campos como no editables
         listOf(
