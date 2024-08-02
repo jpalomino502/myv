@@ -355,7 +355,7 @@ class FormActivity : AppCompatActivity() {
 
     private fun saveDataLocally(serviceRequest: ServiceRequest) {
         val moshi = Moshi.Builder()
-            .add(DateJsonAdapter()) // Agrega este adaptador
+            .add(DateJsonAdapter())
             .add(KotlinJsonAdapterFactory())
             .build()
         val jsonAdapter = moshi.adapter(ServiceRequest::class.java)
@@ -373,18 +373,30 @@ class FormActivity : AppCompatActivity() {
             mutableListOf()
         }
 
+        serviceRequest.isLocal = true
         serviceRequests.add(serviceRequest)
 
         val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)).toJson(serviceRequests)
         editor.putString("service_request_data_list", updatedJson)
+
+        // Guarda el ID del ticket local en una lista separada
+        val localTicketIds = sharedPreferences.getString("localTicketIds", "") ?: ""
+        val updatedLocalIds = localTicketIds.split(",").toMutableSet()
+        updatedLocalIds.add(serviceRequest.ticketId) // Usa ticketId para ServiceRequest
+        editor.putString("localTicketIds", updatedLocalIds.joinToString(","))
+
         editor.apply()
+
+        Log.d("SaveData", "Local ticket IDs saved: ${updatedLocalIds.joinToString(",")}")
 
         runOnUiThread {
             Toast.makeText(this, "Datos guardados localmente", Toast.LENGTH_SHORT).show()
-            btnSave.isEnabled = true // Rehabilitar el botón
+            btnSave.isEnabled = true
             finish()
         }
     }
+
+
 
     private fun clearLocalData() {
         val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)

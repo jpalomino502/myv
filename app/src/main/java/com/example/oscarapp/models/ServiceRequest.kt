@@ -37,5 +37,5 @@ data class ServiceRequest(
     @SerializedName("informeserviciojson") val informeserviciojson: String,
     @SerializedName("serviciosjson") val serviciosjson: String,
     @SerializedName("foto_novedad") val foto_novedad: String,
-
+    var isLocal: Boolean = false
 )

@@ -1,5 +1,3 @@
-package com.example.oscarapp.adapters
-
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +10,8 @@ import com.example.oscarapp.models.Ticket
 
 class TicketAdapter(
     private var tickets: List<Ticket>,
-    private val onItemClick: (Ticket) -> Unit
+    private val onItemClick: (Ticket) -> Unit,
+    private val localTickets: List<String> // Lista de IDs de tickets que deberían ser opacos
 ) : RecyclerView.Adapter<TicketAdapter.TicketViewHolder>(), Filterable {
 
     private var filteredTickets: List<Ticket> = tickets
@@ -24,7 +23,7 @@ class TicketAdapter(
 
     override fun onBindViewHolder(holder: TicketViewHolder, position: Int) {
         val ticket = filteredTickets[position]
-        holder.bind(ticket, onItemClick)
+        holder.bind(ticket, onItemClick, localTickets)
     }
 
     override fun getItemCount(): Int = filteredTickets.size
@@ -39,7 +38,7 @@ class TicketAdapter(
                     tickets.filter {
                         it.titulo.lowercase().contains(filterPattern) ||
                                 it.numTicket.lowercase().contains(filterPattern) ||
-                                it.observaciones?.lowercase()?.contains(filterPattern) == true ||
+                                it.observaciones.lowercase().contains(filterPattern) ||
                                 it.ubicacionActividad.lowercase().contains(filterPattern)
                     }
                 }
@@ -48,7 +47,7 @@ class TicketAdapter(
 
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                filteredTickets = (results?.values as? List<Ticket>) ?: emptyList()
+                filteredTickets = results?.values as List<Ticket>
                 notifyDataSetChanged()
             }
         }
@@ -61,13 +60,29 @@ class TicketAdapter(
         private val ticketObservations: TextView = itemView.findViewById(R.id.ticket_observations)
         private val ticketLocation: TextView = itemView.findViewById(R.id.ticket_location)
 
-        fun bind(ticket: Ticket, onItemClick: (Ticket) -> Unit) {
+        fun bind(ticket: Ticket, onItemClick: (Ticket) -> Unit, localTickets: List<String>) {
             ticketTitle.text = ticket.titulo
             ticketNumber.text = "#orden ${ticket.numTicket}"
             nombreCliente.text = ticket.cliente.nombre
-            ticketObservations.text = ticket.observaciones ?: "Sin observaciones"
+            ticketObservations.text = ticket.observaciones
             ticketLocation.text = ticket.ubicacionActividad
-            itemView.setOnClickListener { onItemClick(ticket) }
+
+            // Verifica si el ticket debe ser opaco usando ticket.id
+            if (localTickets.contains(ticket.id)) {
+                itemView.alpha = 0.5f // Aplica opacidad
+                itemView.isClickable = false // Deshabilita el clic
+                itemView.isFocusable = false // Deshabilita el enfoque
+                itemView.setOnClickListener(null) // Quita cualquier listener de clic
+            } else {
+                itemView.alpha = 1.0f // Sin opacidad
+                itemView.isClickable = true // Habilita el clic
+                itemView.isFocusable = true // Habilita el enfoque
+
+                // Configura el listener de clic solo si el ticket es seleccionable
+                itemView.setOnClickListener {
+                    onItemClick(ticket)
+                }
+            }
         }
     }
 }
