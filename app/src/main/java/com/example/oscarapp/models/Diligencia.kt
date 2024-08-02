@@ -21,7 +21,8 @@ data class Diligencia(
     @SerializedName("concentracion") val concentracion: String,
     @SerializedName("cantidad") val cantidad: String,
     @SerializedName("valortotal") val valortotal: String,
-    @SerializedName("nombre_asesor") val nombre_asesor: String
+    @SerializedName("nombre_asesor") val nombre_asesor: String,
+    @SerializedName("autorizacion_cliente") val autorizacion_cliente: String
 
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
@@ -40,7 +41,8 @@ data class Diligencia(
         concentracion = parcel.readString() ?: "",
         cantidad = parcel.readString() ?: "",
         valortotal = parcel.readString() ?: "",
-        nombre_asesor = parcel.readString() ?: ""
+        nombre_asesor = parcel.readString() ?: "",
+        autorizacion_cliente = parcel.readString() ?: ""
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -60,6 +62,7 @@ data class Diligencia(
         parcel.writeString(cantidad)
         parcel.writeString(valortotal)
         parcel.writeString(nombre_asesor)
+        parcel.writeString(autorizacion_cliente)
     }
 
     override fun describeContents(): Int {

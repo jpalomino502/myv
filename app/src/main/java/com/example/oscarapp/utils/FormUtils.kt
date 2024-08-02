@@ -78,7 +78,7 @@ object FormUtils {
         valortotalEditText.setText(ticket.diligencias.firstOrNull()?.valortotal)
         nombre_asesorEditText.setText(ticket.diligencias.firstOrNull()?.nombre_asesor)
         productoEditText.setText(ticket.diligencias.firstOrNull()?.producto)
-        autorizacionClienteEditText.setText(ticket.cliente?.nombre)
+        autorizacionClienteEditText.setText(ticket.diligencias.firstOrNull()?.autorizacion_cliente)
         recibiClienteEditText.setText(ticket.cliente?.nombre)
 
         // Configura campos como no editables
