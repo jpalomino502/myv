@@ -373,6 +373,11 @@ class FormActivity : AppCompatActivity() {
             mutableListOf()
         }
 
+        // Log or handle case where numTicket might be missing
+        if (serviceRequest.ticketId.isNullOrEmpty()) {
+            Log.w("saveDataLocally", "Attempting to save ServiceRequest with empty numTicket")
+        }
+
         serviceRequests.add(serviceRequest)
 
         val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)).toJson(serviceRequests)
@@ -385,6 +390,7 @@ class FormActivity : AppCompatActivity() {
             finish()
         }
     }
+
 
     private fun clearLocalData() {
         val sharedPreferences = getSharedPreferences("local_data_prefs", MODE_PRIVATE)
