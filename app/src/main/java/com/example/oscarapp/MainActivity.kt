@@ -1,5 +1,6 @@
 package com.example.oscarapp
 
+import TicketAdapter
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -30,7 +31,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.oscarapp.adapters.TicketAdapter
 import com.example.oscarapp.models.ServiceRequest
 import com.example.oscarapp.models.Ticket
 import com.example.oscarapp.models.TicketResponse
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
     private val updateInterval: Long = 5000
 
     private lateinit var requestWritePermissionLauncher: ActivityResultLauncher<IntentSenderRequest>
-    private val networkReceiver = NetworkChangeReceiver()
+    private val networkReceiver = NetworkReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,10 +102,6 @@ class MainActivity : AppCompatActivity() {
 
         requestNecessaryPermissions()
 
-        val intent = Intent(this, DataSyncService::class.java)
-        startService(intent)
-        Log.d("MainActivity", "DataSyncService started from MainActivity")
-
         requestWritePermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 Toast.makeText(this, "Permiso de escritura concedido", Toast.LENGTH_SHORT).show()
@@ -118,6 +114,7 @@ class MainActivity : AppCompatActivity() {
 
         registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
 
+        // Iniciar la actualización periódica de tickets
         startPeriodicUpdates()
     }
 
@@ -223,15 +220,25 @@ class MainActivity : AppCompatActivity() {
         sendPendingServiceRequests()
     }
 
+    private fun getLocalTicketIds(): List<String> {
+        val sharedPreferences = getSharedPreferences("local_data_prefs", Context.MODE_PRIVATE)
+        val idsString = sharedPreferences.getString("localTicketIds", "")
+        Log.d("GetLocalTicketIds", "IDs from SharedPreferences: $idsString")
+        return idsString?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+    }
+
     private fun fetchTickets() {
         val savedTickets = getSavedTickets()
         val userId = sharedPreferences.getString("userId", "") ?: ""
 
+        val localTickets = getLocalTicketIds()
+        Log.d("FetchTickets", "Local ticket IDs: ${localTickets.joinToString(",")}")
+
         if (savedTickets.isNotEmpty()) {
             val filteredTickets = savedTickets.filter { it.estado != "cerrado" }
-            adapter = TicketAdapter(filteredTickets) { ticket ->
+            adapter = TicketAdapter(filteredTickets, { ticket ->
                 openFormActivity(ticket)
-            }
+            }, localTickets)
             recyclerView.adapter = adapter
         }
 
@@ -241,32 +248,39 @@ class MainActivity : AppCompatActivity() {
         call?.enqueue(object : Callback<TicketResponse> {
             override fun onResponse(call: Call<TicketResponse>, response: Response<TicketResponse>) {
                 if (response.isSuccessful) {
-                    response.body()?.let { ticketResponse ->
-                        val tickets = ticketResponse.tickets.filter { it.estado != "cerrado" }
-                        adapter = TicketAdapter(tickets) { ticket ->
-                            openFormActivity(ticket)
+                    val ticketResponse = response.body()
+                    ticketResponse?.let {
+                        runOnUiThread {
+                            val tickets = it.tickets.filter { ticket -> ticket.estado != "cerrado" }
+                            adapter = TicketAdapter(tickets, { ticket ->
+                                openFormActivity(ticket)
+                            }, localTickets)
+                            recyclerView.adapter = adapter
+                            saveTickets(tickets)
                         }
-                        recyclerView.adapter = adapter
-                        saveTickets(ticketResponse.tickets)
                     }
+                } else {
+                    Log.e("API_ERROR", "Error: ${response.errorBody()?.string()}")
                 }
             }
 
             override fun onFailure(call: Call<TicketResponse>, t: Throwable) {
-                Log.e("MainActivity", "Error al obtener tickets", t)
+                Log.e("NETWORK_ERROR", "Exception: ${t.message}")
             }
         })
     }
 
     private fun saveTickets(tickets: List<Ticket>) {
+        val editor = sharedPreferences.edit()
         val gson = Gson()
         val json = gson.toJson(tickets)
-        sharedPreferences.edit().putString("tickets", json).apply()
+        editor.putString("savedTickets", json)
+        editor.apply()
     }
 
     private fun getSavedTickets(): List<Ticket> {
         val gson = Gson()
-        val json = sharedPreferences.getString("tickets", null)
+        val json = sharedPreferences.getString("savedTickets", null)
         val type = object : TypeToken<List<Ticket>>() {}.type
         return if (json != null) {
             gson.fromJson(json, type)
@@ -320,39 +334,47 @@ class MainActivity : AppCompatActivity() {
                     val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
                     val serviceRequests = listAdapter.fromJson(serviceRequestsJson) ?: mutableListOf()
 
-                    val serviceRequestsCopy = serviceRequests.toMutableList()
+                    serviceRequests.forEach { serviceRequest ->
+                        // Verificar si el ticket ya fue enviado
+                        if (!isTicketSent(serviceRequest.ticketId)) {
+                            try {
+                                val apiService = RetrofitClient.retrofitInstance.create(ApiService::class.java)
+                                val response = apiService.sendServiceRequest(serviceRequest)
 
-                    serviceRequestsCopy.forEach { serviceRequest ->
-                        try {
-                            val apiService = RetrofitClient.retrofitInstance.create(ApiService::class.java)
-                            val response = apiService.sendServiceRequest(serviceRequest)
-
-                            withContext(Dispatchers.Main) {
-                                if (response.isSuccessful) {
-                                    Log.d("MainActivity", "Datos enviados exitosamente")
-                                    serviceRequests.remove(serviceRequest)
-                                } else {
-                                    Toast.makeText(this@MainActivity, "Error al enviar datos: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+                                withContext(Dispatchers.Main) {
+                                    if (response.isSuccessful) {
+                                        Log.d("MainActivity", "Datos enviados exitosamente")
+                                        removeSentData(serviceRequest)
+                                        // Marcar el ticket como enviado
+                                        markTicketAsSent(serviceRequest.ticketId)
+                                    } else {
+                                        Toast.makeText(this@MainActivity, "Error al enviar datos: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(this@MainActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
                             }
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(this@MainActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
-                            }
                         }
                     }
-
-                    withContext(Dispatchers.Main) {
-                        val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
-                        sharedPreferences.edit().putString("service_request_data_list", updatedJson).apply()
-
-                        if (serviceRequests.isEmpty()) {
-                            clearLocalData()
-                        }
-                    }
+                    clearLocalData()
                 }
             }
         }
+    }
+
+    // Verificar si un ticket ya fue enviado
+    private fun isTicketSent(ticketId: String): Boolean {
+        val sentTickets = sharedPreferences.getStringSet("sentTickets", emptySet()) ?: emptySet()
+        return sentTickets.contains(ticketId)
+    }
+
+    // Marcar un ticket como enviado
+    private fun markTicketAsSent(ticketId: String) {
+        val sentTickets = sharedPreferences.getStringSet("sentTickets", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        sentTickets.add(ticketId)
+        sharedPreferences.edit().putStringSet("sentTickets", sentTickets).apply()
     }
 
     private fun removeSentData(serviceRequest: ServiceRequest) {
@@ -377,10 +399,10 @@ class MainActivity : AppCompatActivity() {
 
     private inner class NetworkReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            checkNetworkStatus()
             if (isNetworkConnected()) {
                 sendPendingServiceRequests()
             }
+            checkNetworkStatus()
         }
     }
 }
