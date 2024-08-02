@@ -1,3 +1,4 @@
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,12 +43,14 @@ class TicketAdapter(
                                 it.ubicacionActividad.lowercase().contains(filterPattern)
                     }
                 }
+                Log.d("TicketAdapter", "Filtered List: $filteredList") // Agrega este log
                 return FilterResults().apply { values = filteredList }
             }
 
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                filteredTickets = results?.values as List<Ticket>
+                Log.d("TicketAdapter", "Results: ${results?.values}") // Agrega este log
+                filteredTickets = (results?.values as? List<Ticket>) ?: emptyList()
                 notifyDataSetChanged()
             }
         }
@@ -74,11 +77,9 @@ class TicketAdapter(
                 itemView.isFocusable = false // Deshabilita el enfoque
                 itemView.setOnClickListener(null) // Quita cualquier listener de clic
             } else {
-                itemView.alpha = 1.0f // Sin opacidad
-                itemView.isClickable = true // Habilita el clic
-                itemView.isFocusable = true // Habilita el enfoque
-
-                // Configura el listener de clic solo si el ticket es seleccionable
+                itemView.alpha = 1.0f
+                itemView.isClickable = true
+                itemView.isFocusable = true
                 itemView.setOnClickListener {
                     onItemClick(ticket)
                 }
