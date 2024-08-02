@@ -330,7 +330,7 @@ class MainActivity : AppCompatActivity() {
                             withContext(Dispatchers.Main) {
                                 if (response.isSuccessful) {
                                     Log.d("MainActivity", "Datos enviados exitosamente")
-                                    removeSentData(serviceRequest) // Elimina el ticket enviado
+                                    serviceRequests.remove(serviceRequest)
                                 } else {
                                     Toast.makeText(this@MainActivity, "Error al enviar datos: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
                                 }
@@ -343,7 +343,6 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     withContext(Dispatchers.Main) {
-                        // Actualiza la lista de solicitudes en SharedPreferences
                         val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
                         sharedPreferences.edit().putString("service_request_data_list", updatedJson).apply()
 
@@ -365,7 +364,7 @@ class MainActivity : AppCompatActivity() {
         val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
         val serviceRequests = listAdapter.fromJson(serviceRequestsJson) ?: mutableListOf()
 
-        serviceRequests.remove(serviceRequest) // Elimina el ticket de la lista
+        serviceRequests.remove(serviceRequest)
 
         val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
         sharedPreferences.edit().putString("service_request_data_list", updatedJson).apply()
