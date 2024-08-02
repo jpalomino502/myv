@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -37,6 +38,7 @@
             android:theme="@style/Theme.OscarApp">
         </activity>
 
+        <!-- Network Receiver -->
         <receiver android:name=".NetworkChangeReceiver"
             android:exported="true">
             <intent-filter>
@@ -44,8 +46,8 @@
             </intent-filter>
         </receiver>
 
+        <!-- Data Sync Service -->
         <service android:name=".DataSyncService" android:exported="false"/>
-
 
     </application>
 
@@ -53,4 +55,5 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera"/>
+
 </manifest>

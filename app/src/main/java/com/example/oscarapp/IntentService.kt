@@ -23,6 +23,7 @@ class DataSyncService : IntentService("DataSyncService") {
         val json = sharedPreferences.getString("service_request_data_list", null)
 
         if (json != null) {
+            Log.d("DataSyncService", "Data found in SharedPreferences")
             val moshi = Moshi.Builder()
                 .add(DateJsonAdapter())
                 .add(KotlinJsonAdapterFactory())
@@ -31,42 +32,51 @@ class DataSyncService : IntentService("DataSyncService") {
             val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
             val serviceRequests = listAdapter.fromJson(json) ?: mutableListOf()
 
-            val serviceRequestsCopy = serviceRequests.toMutableList() // Crear una copia de la lista original
+            if (serviceRequests.isEmpty()) {
+                Log.d("DataSyncService", "No service requests found")
+                return
+            }
+
+            val serviceRequestsCopy = serviceRequests.toMutableList()
 
             CoroutineScope(Dispatchers.IO).launch {
                 serviceRequestsCopy.forEach { serviceRequest ->
                     try {
+                        Log.d("DataSyncService", "Sending request: $serviceRequest")
                         val apiService = RetrofitClient.retrofitInstance.create(ApiService::class.java)
                         val response = apiService.sendServiceRequest(serviceRequest)
 
                         withContext(Dispatchers.Main) {
                             if (response.isSuccessful) {
-                                serviceRequests.remove(serviceRequest)
+                                Log.d("DataSyncService", "Request successful: $serviceRequest")
                                 Toast.makeText(this@DataSyncService, "Datos enviados exitosamente", Toast.LENGTH_SHORT).show()
+                                serviceRequests.remove(serviceRequest)
                             } else {
+                                Log.e("DataSyncService", "Error sending request: ${response.errorBody()?.string()}")
                                 Toast.makeText(this@DataSyncService, "Error al enviar datos: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
                             }
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
+                            Log.e("DataSyncService", "Exception sending request: ${e.message}")
                             Toast.makeText(this@DataSyncService, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
 
-                // Actualizar los datos locales después de intentar enviar todos los formularios
                 withContext(Dispatchers.Main) {
                     val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
-                    val editor = sharedPreferences.edit()
-                    editor.putString("service_request_data_list", updatedJson)
-                    editor.apply()
+                    sharedPreferences.edit()
+                        .putString("service_request_data_list", updatedJson)
+                        .apply()
 
-                    // Si todos los datos fueron enviados, limpiar el almacenamiento local
                     if (serviceRequests.isEmpty()) {
                         clearLocalData()
                     }
                 }
             }
+        } else {
+            Log.d("DataSyncService", "No data found in SharedPreferences")
         }
     }
 

@@ -1,13 +1,11 @@
 package com.example.oscarapp
 
 import TicketAdapter
-import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.NetworkInfo
@@ -21,32 +19,18 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.oscarapp.models.ServiceRequest
 import com.example.oscarapp.models.Ticket
 import com.example.oscarapp.models.TicketResponse
 import com.example.oscarapp.network.ApiService
 import com.example.oscarapp.network.RetrofitClient
-import com.example.oscarapp.utils.DateJsonAdapter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -60,7 +44,6 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private val updateInterval: Long = 5000
 
-    private lateinit var requestWritePermissionLauncher: ActivityResultLauncher<IntentSenderRequest>
     private val networkReceiver = NetworkReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,7 +77,6 @@ class MainActivity : AppCompatActivity() {
         checkNetworkStatus()
 
         registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
-
         startPeriodicUpdates()
     }
 
@@ -117,27 +99,15 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacksAndMessages(null)
     }
 
+    override fun onResume() {
+        super.onResume()
+        Log.d("MainActivity", "onResume called")
+        // No longer calling sendPendingServiceRequests here
+    }
+
     override fun onPause() {
         super.onPause()
         Log.d("MainActivity", "onPause called")
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Log.d("MainActivity", "onStop called")
-        call?.cancel()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        sendPendingServiceRequests()
-    }
-
-    private fun getLocalTicketIds(): List<String> {
-        val sharedPreferences = getSharedPreferences("local_data_prefs", Context.MODE_PRIVATE)
-        val idsString = sharedPreferences.getString("localTicketIds", "")
-        Log.d("GetLocalTicketIds", "IDs from SharedPreferences: $idsString")
-        return idsString?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
     }
 
     private fun fetchTickets() {
@@ -235,87 +205,24 @@ class MainActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun sendPendingServiceRequests() {
-        if (isNetworkConnected()) {
-            CoroutineScope(Dispatchers.IO).launch {
-                val serviceRequestsJson = sharedPreferences.getString("service_request_data_list", null)
-                if (serviceRequestsJson != null) {
-                    val moshi = Moshi.Builder()
-                        .add(DateJsonAdapter())
-                        .build()
-                    val type = Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)
-                    val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
-                    val serviceRequests = listAdapter.fromJson(serviceRequestsJson) ?: mutableListOf()
-
-                    serviceRequests.forEach { serviceRequest ->
-                        // Verificar si el ticket ya fue enviado
-                        if (!isTicketSent(serviceRequest.ticketId)) {
-                            try {
-                                val apiService = RetrofitClient.retrofitInstance.create(ApiService::class.java)
-                                val response = apiService.sendServiceRequest(serviceRequest)
-
-                                withContext(Dispatchers.Main) {
-                                    if (response.isSuccessful) {
-                                        Log.d("MainActivity", "Datos enviados exitosamente")
-                                        removeSentData(serviceRequest)
-                                        // Marcar el ticket como enviado
-                                        markTicketAsSent(serviceRequest.ticketId)
-                                    } else {
-                                        Toast.makeText(this@MainActivity, "Error al enviar datos: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(this@MainActivity, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    }
-                    clearLocalData()
-                }
-            }
-        }
-    }
-
-    // Verificar si un ticket ya fue enviado
-    private fun isTicketSent(ticketId: String): Boolean {
-        val sentTickets = sharedPreferences.getStringSet("sentTickets", emptySet()) ?: emptySet()
-        return sentTickets.contains(ticketId)
-    }
-
-    // Marcar un ticket como enviado
-    private fun markTicketAsSent(ticketId: String) {
-        val sentTickets = sharedPreferences.getStringSet("sentTickets", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-        sentTickets.add(ticketId)
-        sharedPreferences.edit().putStringSet("sentTickets", sentTickets).apply()
-    }
-
-    private fun removeSentData(serviceRequest: ServiceRequest) {
-        val serviceRequestsJson = sharedPreferences.getString("service_request_data_list", null)
-        val moshi = Moshi.Builder()
-            .add(DateJsonAdapter())
-            .build()
-        val type = Types.newParameterizedType(MutableList::class.java, ServiceRequest::class.java)
-        val listAdapter = moshi.adapter<MutableList<ServiceRequest>>(type)
-        val serviceRequests = listAdapter.fromJson(serviceRequestsJson) ?: mutableListOf()
-
-        serviceRequests.remove(serviceRequest)
-
-        val updatedJson = moshi.adapter<MutableList<ServiceRequest>>(type).toJson(serviceRequests)
-        sharedPreferences.edit().putString("service_request_data_list", updatedJson).apply()
-    }
-
-    private fun clearLocalData() {
-        sharedPreferences.edit().clear().apply()
-        Log.d("MainActivity", "Datos locales borrados de SharedPreferences")
-    }
-
     private inner class NetworkReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            Log.d("NetworkReceiver", "Network status changed")
             if (isNetworkConnected()) {
-                sendPendingServiceRequests()
+                Log.d("NetworkReceiver", "Network is connected, triggering DataSyncService")
+                val serviceIntent = Intent(this@MainActivity, DataSyncService::class.java)
+                startService(serviceIntent)
+            } else {
+                Log.d("NetworkReceiver", "Network is not connected")
             }
             checkNetworkStatus()
         }
+    }
+
+    private fun getLocalTicketIds(): List<String> {
+        val sharedPreferences = getSharedPreferences("local_data_prefs", Context.MODE_PRIVATE)
+        val idsString = sharedPreferences.getString("localTicketIds", "")
+        Log.d("GetLocalTicketIds", "IDs from SharedPreferences: $idsString")
+        return idsString?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
     }
 }
