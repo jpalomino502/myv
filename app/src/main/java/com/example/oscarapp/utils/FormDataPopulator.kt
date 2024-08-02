@@ -99,17 +99,13 @@ object FormDataPopulator {
                                 val radioButton = group.findViewById<RadioButton>(checkedId)
                                 if (radioButton != null) {
                                     val gradoName = radioButton.text.toString()
-                                    val isChecked = radioButton.isChecked
-                                    if (gradoObj.optString("name") == gradoName) {
-                                        gradoObj.put("checked", isChecked)
-                                    } else {
-                                        gradoObj.put("checked", false)
-                                    }
+                                    gradoObj.put("checked", gradoObj.optString("name") == gradoName)
                                 }
                             }
                             printNewJson(modifiedServiciosArray!!)
                         }
                     }
+
 
                     for (j in 0 until gradosArray.length()) {
                         val gradoObj = gradosArray.getJSONObject(j)
