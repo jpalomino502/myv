@@ -39,7 +39,7 @@ class TicketAdapter(
                     tickets.filter {
                         it.titulo.lowercase().contains(filterPattern) ||
                                 it.numTicket.lowercase().contains(filterPattern) ||
-                                it.observaciones.lowercase().contains(filterPattern) ||
+                                it.observaciones?.lowercase()?.contains(filterPattern) == true ||
                                 it.ubicacionActividad.lowercase().contains(filterPattern)
                     }
                 }
@@ -48,7 +48,7 @@ class TicketAdapter(
 
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                filteredTickets = results?.values as List<Ticket>
+                filteredTickets = (results?.values as? List<Ticket>) ?: emptyList()
                 notifyDataSetChanged()
             }
         }
@@ -65,7 +65,7 @@ class TicketAdapter(
             ticketTitle.text = ticket.titulo
             ticketNumber.text = "#orden ${ticket.numTicket}"
             nombreCliente.text = ticket.cliente.nombre
-            ticketObservations.text = ticket.observaciones
+            ticketObservations.text = ticket.observaciones ?: "Sin observaciones"
             ticketLocation.text = ticket.ubicacionActividad
             itemView.setOnClickListener { onItemClick(ticket) }
         }

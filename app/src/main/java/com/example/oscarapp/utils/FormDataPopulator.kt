@@ -35,8 +35,11 @@ object FormDataPopulator {
                 }
                 serviciosContainer.addView(servicioTitle)
 
-                val itemsArray = servicioObj.optJSONArray("plagas") ?: JSONArray()
-                addSectionItems(activity, serviciosContainer, itemsArray, "Plagas", servicioName, modifiedServiciosArray!!)
+                // Especial para el Servicio 12 y 13
+                val itemsArrayKey = if (servicioName == "Servicio 12" || servicioName == "Servicio 13") "servicios" else "plagas"
+                val itemsArray = servicioObj.optJSONArray(itemsArrayKey) ?: JSONArray()
+                val sectionTitle = if (servicioName == "Servicio 12" || servicioName == "Servicio 13") "Servicios" else "Plagas"
+                addSectionItems(activity, serviciosContainer, itemsArray, sectionTitle, servicioName, modifiedServiciosArray!!)
 
                 val metodosArray = servicioObj.optJSONArray("metodos") ?: JSONArray()
                 if (metodosArray.length() > 0) {
