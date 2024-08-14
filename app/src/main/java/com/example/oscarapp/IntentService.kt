@@ -59,7 +59,7 @@ class DataSyncService : IntentService("DataSyncService") {
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
                             Log.e("DataSyncService", "Exception sending request: ${e.message}")
-                            Toast.makeText(this@DataSyncService, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
+                            //Toast.makeText(this@DataSyncService, "Excepción al enviar datos: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }

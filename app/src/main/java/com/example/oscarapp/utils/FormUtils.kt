@@ -182,16 +182,17 @@ object FormUtils {
                     val imageUri: Uri? = data?.data
                     Log.d("FormUtils", "Selected image URI: $imageUri")
                     imageUri?.let {
-                        val inputStream = activity.contentResolver.openInputStream(it)
-                        val imageBitmap = BitmapFactory.decodeStream(inputStream)
+                        val imageBitmap = decodeSampledBitmapFromUri(it, 800, 800, activity)
                         if (imageBitmap != null) {
                             Log.d("FormUtils", "Loaded image bitmap from URI")
                             val base64Image = bitmapToBase64(imageBitmap)
 
+                            // Guardar siempre en "foto_novedad"
+                            saveBase64ToPreferences(activity, base64Image, "foto_novedad")
+
                             // Handle the service image
                             if (serviceImageView != null) {
                                 serviceImageView?.setImageBitmap(imageBitmap)
-                                saveBase64ToPreferences(activity, base64Image, "base64_image")
                                 serviceImageCallback?.invoke(base64Image)
                                 serviceImageView = null // Reset variable after use
                                 serviceImageCallback = null // Reset callback after use
@@ -199,7 +200,6 @@ object FormUtils {
                             // Handle the additional image
                             else if (additionalImageView != null) {
                                 additionalImageView?.setImageBitmap(imageBitmap)
-                                saveBase64ToPreferences(activity, base64Image, "foto_novedad") // Save with key "foto_novedad"
                                 additionalImageCallback?.invoke(base64Image)
                                 additionalImageView = null // Reset variable after use
                                 additionalImageCallback = null // Reset callback after use
@@ -215,6 +215,39 @@ object FormUtils {
         } else {
             Log.e("FormUtils", "Result code was not OK: $resultCode")
         }
+    }
+
+    private fun decodeSampledBitmapFromUri(uri: Uri, reqWidth: Int, reqHeight: Int, context: Context): Bitmap? {
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+        }
+
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            BitmapFactory.decodeStream(inputStream, null, options)
+        }
+
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
+        options.inJustDecodeBounds = false
+
+        return context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            BitmapFactory.decodeStream(inputStream, null, options)
+        }
+    }
+
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val (height: Int, width: Int) = options.outHeight to options.outWidth
+        var inSampleSize = 1
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight: Int = height / 2
+            val halfWidth: Int = width / 2
+
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+
+        return inSampleSize
     }
 
     private fun bitmapToBase64(bitmap: Bitmap): String {
