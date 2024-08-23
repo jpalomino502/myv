@@ -9,5 +9,6 @@
     <color name="cardBackground">#FFFFFF</color>
     <color name="light_green">#ccffcc</color>
     <color name="light_orange">#ffcc99</color>
+    <color name="green">#44a444</color>
     <color name="textColor">#333333</color>
 </resources>

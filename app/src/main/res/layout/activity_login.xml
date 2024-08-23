@@ -4,28 +4,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/white"
     android:gravity="center">
 
     <!-- Header con el logo -->
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="104dp"
-        android:background="@color/white"
+        android:background="@android:color/white"
         android:gravity="center"
         android:orientation="vertical"
         android:paddingBottom="16dp">
 
         <ImageView
             android:id="@+id/logo"
-            android:layout_width="171dp"
-            android:layout_height="85dp"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="16dp"
+            android:layout_width="250dp"
+            android:layout_height="80dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
             android:src="@drawable/ic_logo" />
     </LinearLayout>
 
+    <!-- Título -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -37,7 +36,7 @@
         android:layout_marginBottom="8dp"
         android:textColor="@android:color/black" />
 
-    <!-- Subtítulo de inicio de sesión -->
+    <!-- Subtítulo -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -45,7 +44,7 @@
         android:textSize="16sp"
         android:gravity="center"
         android:layout_marginBottom="24dp"
-        android:textColor="@android:color/darker_gray" />
+        android:textColor="@android:color/black" />
 
     <!-- Contenedor del formulario centrado -->
     <LinearLayout
@@ -55,6 +54,15 @@
         android:gravity="center_horizontal"
         android:paddingLeft="16dp"
         android:paddingRight="16dp">
+
+        <!-- Texto arriba del campo de Correo -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Correo"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="4dp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
@@ -67,13 +75,21 @@
                 android:id="@+id/username"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Correo"
                 android:padding="16dp"
                 android:background="@drawable/edit_text_background"
                 android:inputType="textEmailAddress"
                 android:textColor="@android:color/black"
-                android:textColorHint="@android:color/black"/>
+                android:textColorHint="@android:color/darker_gray" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Texto arriba del campo de Contraseña -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Contraseña"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="4dp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
@@ -86,12 +102,11 @@
                 android:id="@+id/password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Contraseña"
                 android:padding="16dp"
                 android:background="@drawable/edit_text_background"
                 android:inputType="textPassword"
                 android:textColor="@android:color/black"
-                android:textColorHint="@android:color/black"/>
+                android:textColorHint="@android:color/darker_gray" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button
@@ -99,9 +114,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@drawable/button_background"
             android:padding="10dp"
             android:text="INGRESAR"
+            android:backgroundTint="@color/green"
             android:textColor="@android:color/white"
             android:textSize="16sp" />
     </LinearLayout>
@@ -111,7 +126,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Copyright © MYV TICKETS, 2023 - 2024"
-        android:textColor="@android:color/darker_gray"
+        android:text="Copyright © SISTEMA PARA FUMIGACIONES, 2023 - 2024"
+        android:textColor="@android:color/black"
         android:layout_marginTop="24dp"/>
 </LinearLayout>

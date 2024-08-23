@@ -20,8 +20,8 @@
             <!-- Logo Image -->
             <ImageView
                 android:id="@+id/logoImageView"
-                android:layout_width="171dp"
-                android:layout_height="85dp"
+                android:layout_width="200dp"
+                android:layout_height="90dp"
                 android:layout_alignParentStart="true"
                 android:layout_marginStart="10dp"
                 android:contentDescription="Logo"
@@ -47,7 +47,7 @@
                 android:layout_height="50dp"
                 android:layout_alignParentEnd="true"
                 android:layout_marginEnd="7dp"
-                android:backgroundTint="@color/blue_medium"
+                android:backgroundTint="@color/green"
                 android:padding="4dp"
                 android:text="Salir"
                 android:textColor="@android:color/white"
